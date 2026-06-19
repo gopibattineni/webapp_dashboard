@@ -377,8 +377,16 @@ flowchart LR
 
 1. Open **Settings → Pages** on GitHub  
 2. **Source:** Deploy from a branch  
-3. **Branch:** `gh-pages` / `(root)`  
-   — or use **GitHub Actions** if the workflow is configured  
+3. Choose **one** of these (recommended first):
+
+| Option | Branch | Folder | Notes |
+|--------|--------|--------|--------|
+| **Recommended** | `main` | `/docs` | Serves `docs/index.html` at the site root |
+| Alternative | `gh-pages` | `/(root)` | Filled by GitHub Actions on each push to `main` |
+
+**Do not** use `main` / `(root)` unless you have pushed the root `index.html` redirect — otherwise GitHub shows **README.md** instead of the dashboard.
+
+After changing the setting, wait 1–2 minutes and hard-refresh (`Ctrl+F5`).
 
 ### Push updates
 
@@ -433,6 +441,7 @@ If you use this dashboard or benchmark in academic work, please cite the SYNTH s
 |---------|----------|
 | `ERR_CONNECTION_REFUSED` on localhost | Run `start.bat` or `uvicorn` (see [Quick start](#quick-start)) |
 | Dashboard shows no datasets | Run `python scripts/export_dashboard_data.py` |
-| GitHub Pages 404 | Enable Pages: branch `gh-pages`, folder `/ (root)` |
+| GitHub Pages shows README, not graphs | Set Pages to **`main` / `docs`** (or `gh-pages` / root), then push latest `docs/` |
+| GitHub Pages 404 | Enable Pages (see [GitHub Pages deployment](#github-pages-deployment)) |
 | Figures look stale | Hard-refresh with `Ctrl+F5` |
 | Friedman/CD diagram empty | Need ≥3 datasets with complete generator data |

@@ -53,7 +53,7 @@ def patch_dashboard_html(html: str) -> str:
         f'<a href="{GITHUB_REPO}" class="nav-link">Run Experiment</a>',
         f'<a href="{GITHUB_REPO}" class="nav-link" target="_blank" rel="noopener">Web App (local)</a>',
     )
-  html = html.replace(
+    html = html.replace(
         '<a href="/dashboard" class="nav-link active">Results Dashboard</a>',
         '<a href="./" class="nav-link active">Results Dashboard</a>',
     )
@@ -84,16 +84,15 @@ def write_root_redirect() -> None:
 def build() -> Path:
     run_export()
 
-    if DOCS.exists():
-        shutil.rmtree(DOCS)
-    DOCS.mkdir()
-    ASSETS.mkdir()
-    DATA.mkdir()
+    DOCS.mkdir(parents=True, exist_ok=True)
+    ASSETS.mkdir(parents=True, exist_ok=True)
+    DATA.mkdir(parents=True, exist_ok=True)
+    (DATA / "datasets").mkdir(parents=True, exist_ok=True)
 
     audit_src = STATIC / "data" / "audit"
     for name in ["datasets.json", "overview.json"]:
         shutil.copy2(audit_src / name, DATA / name)
-    shutil.copytree(audit_src / "datasets", DATA / "datasets")
+    shutil.copytree(audit_src / "datasets", DATA / "datasets", dirs_exist_ok=True)
 
     for fname in COPY_FILES:
         src = STATIC / fname
