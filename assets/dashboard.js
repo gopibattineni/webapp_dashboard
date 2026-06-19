@@ -314,23 +314,38 @@ function initTabs() {
   });
 }
 
+function exportFilename(btn) {
+  const ds = currentData?.short_name || currentData?.id || "benchmark";
+  const base = btn.dataset.filename || `${btn.dataset.export}.png`;
+  const stem = base.replace(/\.png$/i, "");
+  return `${stem}_${ds}.png`;
+}
+
 function initExportButtons() {
   $$(".btn-export").forEach((btn) => {
-    btn.title = "Download publication PNG (3× resolution, white background, title & caption)";
+    btn.title = "Download high-resolution PNG (publication quality, white background)";
     btn.addEventListener("click", async () => {
       const id = btn.dataset.export;
-      const name = currentData?.short_name || "benchmark";
-      const file = btn.dataset.filename?.replace("fig_", `fig_${name}_`) || `${id}.png`;
+      const file = exportFilename(btn);
       syncExportContext();
-      await DashboardCharts.exportChart(id, file);
+      btn.disabled = true;
+      const prev = btn.textContent;
+      btn.textContent = "Exporting…";
+      try {
+        await DashboardCharts.exportChart(id, file);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = prev;
+      }
     });
   });
 }
 
 function initPaperTheme() {
+  DashboardCharts.setPaperTheme(true);
   $("#btn-paper-theme").addEventListener("click", () => {
-    document.body.classList.toggle("paper-theme");
-    $("#btn-paper-theme").classList.toggle("active");
+    const on = !document.body.classList.contains("paper-theme");
+    DashboardCharts.setPaperTheme(on);
     refreshCharts("all");
   });
 }

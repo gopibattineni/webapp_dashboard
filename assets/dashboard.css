@@ -178,6 +178,24 @@ body.paper-theme .figure-caption {
   border-color: var(--accent);
 }
 
+.btn-export-primary {
+  padding: 0.35rem 0.85rem;
+  font-size: 0.78rem;
+  color: var(--text);
+  border-color: var(--accent);
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.btn-export-primary:hover {
+  background: rgba(59, 130, 246, 0.22);
+  color: #fff;
+}
+
+body.paper-theme .btn-export-primary {
+  color: #1e40af;
+  background: rgba(37, 99, 235, 0.08);
+}
+
 .per-dataset-figure {
   margin-bottom: 1.25rem;
 }
