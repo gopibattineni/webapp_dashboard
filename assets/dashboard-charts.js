@@ -236,13 +236,373 @@ function registerChart(id, chart) {
   return chart;
 }
 
-function exportChart(id, filename) {
-  const chart = chartRegistry[id];
-  if (!chart) return;
+const EXPORT_PIXEL_RATIO = 3;
+const EXPORT_PAD = 52;
+const OVERVIEW_CHART_IDS = new Set([
+  "chart-cd",
+  "chart-tstr-sd",
+  "chart-trtr-gap",
+  "heatmap-tstr",
+  "heatmap-clf",
+  "heatmap-reg",
+  "chart-win-rate",
+]);
+const DATASET_CHART_IDS = new Set([
+  "summary-chart",
+  "chart-trtr-tstr",
+  "chart-model-drop",
+  "chart-radar",
+]);
+
+let exportContext = null;
+
+function setExportContext(ctx) {
+  exportContext = ctx;
+}
+
+function waitFrames(n = 2) {
+  return new Promise((resolve) => {
+    const step = () => {
+      n -= 1;
+      if (n <= 0) resolve();
+      else requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
+}
+
+function downloadDataUrl(dataUrl, filename) {
   const a = document.createElement("a");
-  a.href = chart.toBase64Image("image/png", 1);
+  a.href = dataUrl;
   a.download = filename;
   a.click();
+}
+
+function getFigureMeta(canvasId) {
+  const canvas = document.getElementById(canvasId);
+  const card = canvas?.closest(".figure-card");
+  return {
+    title: card?.querySelector(".figure-title")?.textContent?.trim() || "",
+    caption: card?.querySelector(".figure-caption")?.textContent?.trim() || "",
+  };
+}
+
+function wrapText(ctx, text, maxWidth) {
+  if (!text) return [];
+  const words = text.split(/\s+/);
+  const lines = [];
+  let line = "";
+  words.forEach((word) => {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = test;
+    }
+  });
+  if (line) lines.push(line);
+  return lines;
+}
+
+function drawTextLines(ctx, lines, x, y, lineHeight, color, font) {
+  ctx.fillStyle = color;
+  ctx.font = font;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  lines.forEach((line, i) => {
+    ctx.fillText(line, x, y + i * lineHeight);
+  });
+  return lines.length * lineHeight;
+}
+
+function drawHeatmapLegendBar(ctx, x, y, barW, barH, scaleMeta) {
+  if (!scaleMeta) return 0;
+  const { min, max, label, higherIsBetter } = scaleMeta;
+  const steps = 120;
+  for (let i = 0; i < steps; i++) {
+    const t = i / (steps - 1);
+    const v = min + t * (max - min);
+    ctx.fillStyle = heatColor(v, min, max, higherIsBetter);
+    const sliceW = barW / steps;
+    ctx.fillRect(x + i * sliceW, y, sliceW + 0.5, barH);
+  }
+  ctx.strokeStyle = "#cbd5e1";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x, y, barW, barH);
+  ctx.fillStyle = "#475569";
+  ctx.font = "500 13px Inter, system-ui, sans-serif";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  ctx.fillText(min.toFixed(2), x, y + barH + 8);
+  ctx.textAlign = "center";
+  ctx.fillText(label || "Scale", x + barW / 2, y + barH + 8);
+  ctx.textAlign = "right";
+  ctx.fillText(max.toFixed(2), x + barW, y + barH + 8);
+  const hint = higherIsBetter
+    ? "Green = higher TSTR (better)"
+    : "Green = lower utility loss (better synthetic data)";
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#64748b";
+  ctx.font = "400 12px Inter, system-ui, sans-serif";
+  ctx.fillText(hint, x + barW / 2, y + barH + 28);
+  return barH + 48;
+}
+
+function paintCdDiagram(ctx, width, height, cd, c) {
+  const bg = c.bg === "transparent" ? "#ffffff" : c.bg;
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, width, height);
+
+  const gens = GENERATOR_ORDER.filter((g) => cd.avg_ranks[g] != null).sort(
+    (a, b) => cd.avg_ranks[a] - cd.avg_ranks[b]
+  );
+  const k = gens.length;
+  const fontScale = Math.max(1, width / 640);
+  const labelFont = `600 ${Math.round(12 * fontScale)}px Inter, system-ui, sans-serif`;
+  ctx.font = labelFont;
+  const labelPad = 12 * fontScale;
+  const maxLabelW = Math.max(
+    ...gens.map((g) => ctx.measureText(GEN_LABEL[g] || g).width),
+    48 * fontScale
+  );
+  const margin = {
+    top: 36 * fontScale,
+    right: 28 * fontScale,
+    bottom: 28 * fontScale,
+    left: maxLabelW + labelPad,
+  };
+  const plotW = width - margin.left - margin.right;
+  const rowH = (height - margin.top - margin.bottom) / Math.max(k, 1);
+  const minRank = 1;
+  const maxRank = k;
+
+  const rankX = (rank) =>
+    margin.left + ((rank - minRank) / Math.max(maxRank - minRank, 1)) * plotW;
+
+  ctx.fillStyle = c.muted;
+  ctx.font = `600 ${Math.round(12 * fontScale)}px Inter, system-ui, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.fillText("Best", margin.left, 18 * fontScale);
+  ctx.fillText("Worst", width - margin.right, 18 * fontScale);
+  if (cd.chi2 != null) {
+    ctx.font = `500 ${Math.round(11 * fontScale)}px Inter, system-ui, sans-serif`;
+    ctx.fillText(
+      `Friedman χ²=${Number(cd.chi2).toFixed(2)}, p=${Number(cd.p).toExponential(1)}`,
+      width / 2,
+      18 * fontScale
+    );
+  }
+
+  ctx.strokeStyle = c.grid;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(margin.left, margin.top);
+  ctx.lineTo(width - margin.right, margin.top);
+  ctx.stroke();
+
+  for (let t = minRank; t <= maxRank; t++) {
+    const x = rankX(t);
+    ctx.strokeStyle = c.grid;
+    ctx.beginPath();
+    ctx.moveTo(x, margin.top);
+    ctx.lineTo(x, height - margin.bottom);
+    ctx.stroke();
+    ctx.fillStyle = c.muted;
+    ctx.font = `${Math.round(10 * fontScale)}px Inter, system-ui, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillText(String(t), x, height - 8 * fontScale);
+  }
+
+  const barY = margin.top - 14 * fontScale;
+  const pairs = cd.not_significant_pairs || [];
+  pairs.forEach(([g1, g2]) => {
+    const r1 = cd.avg_ranks[g1];
+    const r2 = cd.avg_ranks[g2];
+    if (r1 == null || r2 == null) return;
+    const x1 = rankX(r1);
+    const x2 = rankX(r2);
+    ctx.strokeStyle = "#64748b";
+    ctx.lineWidth = 2 * fontScale;
+    ctx.beginPath();
+    ctx.moveTo(x1, barY);
+    ctx.lineTo(x2, barY);
+    ctx.stroke();
+  });
+
+  gens.forEach((gen, i) => {
+    const rank = cd.avg_ranks[gen];
+    const y = margin.top + rowH * i + rowH / 2;
+    const x = rankX(rank);
+    const half = Math.min(28 * fontScale, plotW / (k * 2.2));
+
+    ctx.strokeStyle = GEN_COLORS[gen] || "#3b82f6";
+    ctx.lineWidth = 5 * fontScale;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(x - half, y);
+    ctx.lineTo(x + half, y);
+    ctx.stroke();
+
+    ctx.fillStyle = c.text;
+    ctx.font = labelFont;
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    ctx.fillText(GEN_LABEL[gen] || gen, margin.left - labelPad / 2, y);
+    ctx.textAlign = "left";
+    ctx.fillText(`(${rank.toFixed(2)})`, x + half + 6 * fontScale, y);
+  });
+}
+
+function captureCdCanvas(cd, width, height) {
+  const off = document.createElement("canvas");
+  off.width = Math.round(width * EXPORT_PIXEL_RATIO);
+  off.height = Math.round(height * EXPORT_PIXEL_RATIO);
+  const ctx = off.getContext("2d");
+  ctx.scale(EXPORT_PIXEL_RATIO, EXPORT_PIXEL_RATIO);
+  paintCdDiagram(ctx, width, height, cd, {
+    text: "#1e293b",
+    muted: "#64748b",
+    grid: "#e2e8f0",
+    bg: "#ffffff",
+  });
+  return { canvas: off, logicalW: width, logicalH: height };
+}
+
+function getHeatmapScaleMeta(canvasId) {
+  const entry = chartRegistry[canvasId];
+  const chart = entry?.canvas ? entry : Chart.getChart(document.getElementById(canvasId));
+  return chart?.options?.plugins?.heatmapScale || null;
+}
+
+async function captureChartCanvas(canvasId) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return null;
+
+  const entry = chartRegistry[canvasId];
+  if (entry?.cdData) {
+    const parent = canvas.parentElement;
+    const w = Math.max(960, parent?.clientWidth || 960);
+    const h = Math.max(380, parent?.clientHeight || 380);
+    return captureCdCanvas(entry.cdData, w, h);
+  }
+
+  const chart = entry?.canvas ? entry : Chart.getChart(canvas);
+  if (!chart) return null;
+
+  const oldDpr = chart.options.devicePixelRatio;
+  const oldW = chart.width;
+  const oldH = chart.height;
+  chart.options.devicePixelRatio = EXPORT_PIXEL_RATIO;
+  chart.resize(oldW, oldH);
+  await waitFrames(2);
+
+  const off = document.createElement("canvas");
+  off.width = chart.canvas.width;
+  off.height = chart.canvas.height;
+  const ctx = off.getContext("2d");
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, off.width, off.height);
+  ctx.drawImage(chart.canvas, 0, 0);
+
+  chart.options.devicePixelRatio = oldDpr ?? window.devicePixelRatio ?? 1;
+  chart.resize(oldW, oldH);
+
+  return { canvas: off, logicalW: oldW, logicalH: oldH };
+}
+
+async function buildPublicationPng(canvasId) {
+  const captured = await captureChartCanvas(canvasId);
+  if (!captured) return null;
+
+  const { canvas: chartCanvas, logicalW, logicalH } = captured;
+  const { title, caption } = getFigureMeta(canvasId);
+  const heatmapScale = canvasId.startsWith("heatmap-") ? getHeatmapScaleMeta(canvasId) : null;
+
+  const contentW = Math.max(logicalW, 720);
+  const pad = EXPORT_PAD;
+  const titleFont = "700 22px Inter, system-ui, sans-serif";
+  const captionFont = "400 15px Inter, system-ui, sans-serif";
+  const measure = document.createElement("canvas").getContext("2d");
+
+  measure.font = titleFont;
+  const titleLines = wrapText(measure, title, contentW);
+  measure.font = captionFont;
+  const captionLines = wrapText(measure, caption, contentW);
+
+  const titleH = titleLines.length ? titleLines.length * 30 : 0;
+  const captionH = captionLines.length ? captionLines.length * 22 : 0;
+  const headerGap = title || caption ? 16 : 0;
+  const legendBlock = heatmapScale ? 72 : 0;
+  const totalW = contentW + pad * 2;
+  const totalH = pad + titleH + (caption ? captionH + 8 : 0) + headerGap + logicalH + legendBlock + pad;
+
+  const out = document.createElement("canvas");
+  out.width = Math.round(totalW * EXPORT_PIXEL_RATIO);
+  out.height = Math.round(totalH * EXPORT_PIXEL_RATIO);
+  const ctx = out.getContext("2d");
+  ctx.scale(EXPORT_PIXEL_RATIO, EXPORT_PIXEL_RATIO);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, totalW, totalH);
+
+  let y = pad;
+  if (titleLines.length) {
+    drawTextLines(ctx, titleLines, pad, y, 30, "#0f172a", titleFont);
+    y += titleH + 6;
+  }
+  if (captionLines.length) {
+    drawTextLines(ctx, captionLines, pad, y, 22, "#64748b", captionFont);
+    y += captionH + headerGap;
+  } else if (titleLines.length) {
+    y += headerGap;
+  }
+
+  const chartX = pad + (contentW - logicalW) / 2;
+  ctx.drawImage(chartCanvas, chartX, y, logicalW, logicalH);
+  y += logicalH + 12;
+
+  if (heatmapScale) {
+    drawHeatmapLegendBar(ctx, pad, y, contentW, 16, heatmapScale);
+  }
+
+  return out.toDataURL("image/png");
+}
+
+async function exportChart(canvasId, filename) {
+  const btn = document.querySelector(`[data-export="${canvasId}"]`);
+  const wasPaper = isPaperTheme();
+  const prevLabel = btn?.textContent;
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "…";
+  }
+
+  try {
+    document.body.classList.add("paper-theme");
+    if (exportContext?.overview && OVERVIEW_CHART_IDS.has(canvasId)) {
+      refreshOverviewCharts(exportContext.overview);
+    } else if (exportContext?.datasetData && DATASET_CHART_IDS.has(canvasId)) {
+      refreshDatasetCharts(exportContext.datasetData, exportContext.selectedGen);
+    }
+    await waitFrames(3);
+
+    const dataUrl = await buildPublicationPng(canvasId);
+    if (dataUrl) downloadDataUrl(dataUrl, filename);
+  } finally {
+    if (!wasPaper) document.body.classList.remove("paper-theme");
+    if (exportContext) {
+      if (OVERVIEW_CHART_IDS.has(canvasId)) {
+        refreshOverviewCharts(exportContext.overview);
+      } else if (exportContext.datasetData) {
+        refreshDatasetCharts(exportContext.datasetData, exportContext.selectedGen);
+      }
+    }
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = prevLabel || "PNG";
+    }
+  }
 }
 
 function heatColor(value, min, max, invert = false) {
@@ -898,104 +1258,9 @@ function renderCdDiagram(canvasId, cd) {
 
   const ctx = canvas.getContext("2d");
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, width, height);
+  paintCdDiagram(ctx, width, height, cd, c);
 
-  const gens = GENERATOR_ORDER.filter((g) => cd.avg_ranks[g] != null).sort(
-    (a, b) => cd.avg_ranks[a] - cd.avg_ranks[b]
-  );
-  const k = gens.length;
-  const labelFont = "600 12px Inter, system-ui, sans-serif";
-  ctx.font = labelFont;
-  const labelPad = 12;
-  const maxLabelW = Math.max(
-    ...gens.map((g) => ctx.measureText(GEN_LABEL[g] || g).width),
-    48
-  );
-  const margin = { top: 36, right: 28, bottom: 28, left: maxLabelW + labelPad };
-  const plotW = width - margin.left - margin.right;
-  const rowH = (height - margin.top - margin.bottom) / Math.max(k, 1);
-  const minRank = 1;
-  const maxRank = k;
-
-  const rankX = (rank) =>
-    margin.left + ((rank - minRank) / Math.max(maxRank - minRank, 1)) * plotW;
-
-  ctx.fillStyle = c.muted;
-  ctx.font = "600 12px Inter, system-ui, sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText("Best", margin.left, 18);
-  ctx.fillText("Worst", width - margin.right, 18);
-  if (cd.chi2 != null) {
-    ctx.font = "500 11px Inter, system-ui, sans-serif";
-    ctx.fillText(
-      `Friedman χ²=${Number(cd.chi2).toFixed(2)}, p=${Number(cd.p).toExponential(1)}`,
-      width / 2,
-      18
-    );
-  }
-
-  ctx.strokeStyle = c.grid;
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(margin.left, margin.top);
-  ctx.lineTo(width - margin.right, margin.top);
-  ctx.stroke();
-
-  for (let t = minRank; t <= maxRank; t++) {
-    const x = rankX(t);
-    ctx.strokeStyle = c.grid;
-    ctx.beginPath();
-    ctx.moveTo(x, margin.top);
-    ctx.lineTo(x, height - margin.bottom);
-    ctx.stroke();
-    ctx.fillStyle = c.muted;
-    ctx.font = "10px Inter, system-ui, sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText(String(t), x, height - 8);
-  }
-
-  const barY = margin.top - 14;
-  const pairs = cd.not_significant_pairs || [];
-  pairs.forEach(([g1, g2]) => {
-    const r1 = cd.avg_ranks[g1];
-    const r2 = cd.avg_ranks[g2];
-    if (r1 == null || r2 == null) return;
-    const x1 = rankX(r1);
-    const x2 = rankX(r2);
-    ctx.strokeStyle = "#64748b";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(x1, barY);
-    ctx.lineTo(x2, barY);
-    ctx.stroke();
-  });
-
-  gens.forEach((gen, i) => {
-    const rank = cd.avg_ranks[gen];
-    const y = margin.top + rowH * i + rowH / 2;
-    const x = rankX(rank);
-    const half = Math.min(28, plotW / (k * 2.2));
-
-    ctx.strokeStyle = GEN_COLORS[gen] || "#3b82f6";
-    ctx.lineWidth = 5;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    ctx.moveTo(x - half, y);
-    ctx.lineTo(x + half, y);
-    ctx.stroke();
-
-    ctx.fillStyle = c.text;
-    ctx.font = labelFont;
-    ctx.textAlign = "right";
-    ctx.textBaseline = "middle";
-    ctx.fillText(GEN_LABEL[gen] || gen, margin.left - labelPad / 2, y);
-    ctx.textAlign = "left";
-    ctx.fillText(`(${rank.toFixed(2)})`, x + half + 6, y);
-  });
-
-  chartRegistry[canvasId] = {
-    toBase64Image: (type = "image/png") => canvas.toDataURL(type),
-  };
+  chartRegistry[canvasId] = { cdData: cd };
 }
 
 function renderGapChart(canvasId, gapByGenerator) {
@@ -1140,6 +1405,7 @@ window.DashboardCharts = {
   GEN_COLORS,
   destroyChart,
   exportChart,
+  setExportContext,
   refreshOverviewCharts,
   refreshDatasetCharts,
   refreshAllCharts,
