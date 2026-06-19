@@ -205,6 +205,14 @@ function renderGeneratorTab(data, genName) {
   });
 }
 
+function syncExportContext() {
+  DashboardCharts.setExportContext({
+    overview: overviewData,
+    datasetData: currentData,
+    selectedGen: $("#paper-gen-select")?.value || activeGenerator,
+  });
+}
+
 function refreshCharts(scope = "dataset") {
   const gen = $("#paper-gen-select")?.value || activeGenerator;
   if (scope === "overview" || scope === "all") {
@@ -213,6 +221,7 @@ function refreshCharts(scope = "dataset") {
   if ((scope === "dataset" || scope === "all") && currentData) {
     DashboardCharts.refreshDatasetCharts(currentData, gen);
   }
+  syncExportContext();
 }
 
 function renderDashboard(data) {
@@ -307,11 +316,13 @@ function initTabs() {
 
 function initExportButtons() {
   $$(".btn-export").forEach((btn) => {
-    btn.addEventListener("click", () => {
+    btn.title = "Download publication PNG (3× resolution, white background, title & caption)";
+    btn.addEventListener("click", async () => {
       const id = btn.dataset.export;
       const name = currentData?.short_name || "benchmark";
       const file = btn.dataset.filename?.replace("fig_", `fig_${name}_`) || `${id}.png`;
-      DashboardCharts.exportChart(id, file);
+      syncExportContext();
+      await DashboardCharts.exportChart(id, file);
     });
   });
 }
