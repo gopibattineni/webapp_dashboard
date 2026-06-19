@@ -1,0 +1,92 @@
+[
+  {
+    "id": "cancer",
+    "name": "Breast Cancer Wisconsin",
+    "folder": "1. Cancer",
+    "task_type": "classification",
+    "uci_id": 17,
+    "available": true,
+    "excel_path": "C:\\Users\\Gopi.Battineni\\OneDrive - University of Limerick\\Desktop\\SYNTH\\Synthetic_Data_Audit\\SYNTH\\Single run_Data_leak_Synth_Quality\\1. Cancer\\TRTR_TSTR_results.xlsx"
+  },
+  {
+    "id": "magic",
+    "name": "MAGIC Gamma Telescope",
+    "folder": "2. MAGIC Gamma Telescope",
+    "task_type": "classification",
+    "uci_id": 159,
+    "available": true,
+    "excel_path": "C:\\Users\\Gopi.Battineni\\OneDrive - University of Limerick\\Desktop\\SYNTH\\Synthetic_Data_Audit\\SYNTH\\Single run_Data_leak_Synth_Quality\\2. MAGIC Gamma Telescope\\TRTR_TSTR_results.xlsx"
+  },
+  {
+    "id": "adult",
+    "name": "Adult Census",
+    "folder": "3. Adult",
+    "task_type": "classification",
+    "uci_id": 2,
+    "available": true,
+    "excel_path": "C:\\Users\\Gopi.Battineni\\OneDrive - University of Limerick\\Desktop\\SYNTH\\Synthetic_Data_Audit\\SYNTH\\Single run_Data_leak_Synth_Quality\\3. Adult\\TRTR_TSTR_results.xlsx"
+  },
+  {
+    "id": "forest_cover",
+    "name": "Forest Cover Type",
+    "folder": "4. Forest cover dataset",
+    "task_type": "classification",
+    "uci_id": 31,
+    "available": true,
+    "excel_path": "C:\\Users\\Gopi.Battineni\\OneDrive - University of Limerick\\Desktop\\SYNTH\\Synthetic_Data_Audit\\SYNTH\\Single run_Data_leak_Synth_Quality\\4. Forest cover dataset\\TRTR_TSTR_results.xlsx"
+  },
+  {
+    "id": "bank",
+    "name": "Bank Marketing",
+    "folder": "5. Bank Markting",
+    "task_type": "classification",
+    "uci_id": 222,
+    "available": true,
+    "excel_path": "C:\\Users\\Gopi.Battineni\\OneDrive - University of Limerick\\Desktop\\SYNTH\\Synthetic_Data_Audit\\SYNTH\\Single run_Data_leak_Synth_Quality\\5. Bank Markting\\TRTR_TSTR_results.xlsx"
+  },
+  {
+    "id": "wine",
+    "name": "Wine Quality",
+    "folder": "6. Wine dataset",
+    "task_type": "classification",
+    "uci_id": 186,
+    "available": true,
+    "excel_path": "C:\\Users\\Gopi.Battineni\\OneDrive - University of Limerick\\Desktop\\SYNTH\\Synthetic_Data_Audit\\SYNTH\\Single run_Data_leak_Synth_Quality\\6. Wine dataset\\TRTR_TSTR_results.xlsx"
+  },
+  {
+    "id": "mushroom",
+    "name": "Secondary Mushroom",
+    "folder": "7. Mushroom dataset",
+    "task_type": "classification",
+    "uci_id": 848,
+    "available": true,
+    "excel_path": "C:\\Users\\Gopi.Battineni\\OneDrive - University of Limerick\\Desktop\\SYNTH\\Synthetic_Data_Audit\\SYNTH\\Single run_Data_leak_Synth_Quality\\7. Mushroom dataset\\TRTR_TSTR_results.xlsx"
+  },
+  {
+    "id": "cdc_diabetes",
+    "name": "CDC Diabetes",
+    "folder": "8. CDC diabetes dataset",
+    "task_type": "classification",
+    "uci_id": 891,
+    "available": true,
+    "excel_path": "C:\\Users\\Gopi.Battineni\\OneDrive - University of Limerick\\Desktop\\SYNTH\\Synthetic_Data_Audit\\SYNTH\\Single run_Data_leak_Synth_Quality\\8. CDC diabetes dataset\\TRTR_TSTR_results.xlsx"
+  },
+  {
+    "id": "metro",
+    "name": "Metro Interstate Traffic",
+    "folder": "9. Metro interstate",
+    "task_type": "regression",
+    "uci_id": 492,
+    "available": true,
+    "excel_path": "C:\\Users\\Gopi.Battineni\\OneDrive - University of Limerick\\Desktop\\SYNTH\\Synthetic_Data_Audit\\SYNTH\\Single run_Data_leak_Synth_Quality\\9. Metro interstate\\TRTR_TSTR_results_regression.xlsx"
+  },
+  {
+    "id": "online_shopping",
+    "name": "Online Shopping (Clickstream)",
+    "folder": "10. online shopping",
+    "task_type": "regression",
+    "uci_id": 553,
+    "available": true,
+    "excel_path": "C:\\Users\\Gopi.Battineni\\OneDrive - University of Limerick\\Desktop\\SYNTH\\Synthetic_Data_Audit\\SYNTH\\Single run_Data_leak_Synth_Quality\\10. online shopping\\TRTR_TSTR_results_regression.xlsx"
+  }
+]

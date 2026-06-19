@@ -1,0 +1,183 @@
+{
+  "generators": [
+    "CTGAN",
+    "CopulaGAN",
+    "TVAE",
+    "GaussianCopula",
+    "WGAN_GP",
+    "CTABGAN"
+  ],
+  "classification": [
+    {
+      "id": "cancer",
+      "name": "Breast Cancer Wisconsin",
+      "short_name": "Cancer",
+      "task_type": "classification",
+      "metric_key": "Accuracy_Drop",
+      "best": "WGAN_GP",
+      "generators": {
+        "WGAN_GP": 0.02219298245614042,
+        "TVAE": 0.03517543859649121,
+        "CTABGAN": 0.07885964912280703,
+        "GaussianCopula": 0.101140350877193,
+        "CTGAN": 0.2421929824561403,
+        "CopulaGAN": 0.602280701754386
+      }
+    },
+    {
+      "id": "magic",
+      "name": "MAGIC Gamma Telescope",
+      "short_name": "MAGIC",
+      "task_type": "classification",
+      "metric_key": "Accuracy_Drop",
+      "best": "WGAN_GP",
+      "generators": {
+        "WGAN_GP": 0.03599894847528913,
+        "CTABGAN": 0.04716614090431118,
+        "TVAE": 0.08213722397476339,
+        "CopulaGAN": 0.09830441640378543,
+        "GaussianCopula": 0.0995820189274447,
+        "CTGAN": 0.1067770767613038
+      }
+    },
+    {
+      "id": "adult",
+      "name": "Adult Census",
+      "short_name": "Adult",
+      "task_type": "classification",
+      "metric_key": "Accuracy_Drop",
+      "best": "CTGAN",
+      "generators": {
+        "CTGAN": 0.1359,
+        "TVAE": 0.15035,
+        "GaussianCopula": 0.1561,
+        "CopulaGAN": 0.1572,
+        "CTABGAN": 0.2340999999999999,
+        "WGAN_GP": 0.4702499999999999
+      }
+    },
+    {
+      "id": "forest_cover",
+      "name": "Forest Cover Type",
+      "short_name": "Forest",
+      "task_type": "classification",
+      "metric_key": "Accuracy_Drop",
+      "best": "GaussianCopula",
+      "generators": {
+        "GaussianCopula": 0.16185,
+        "WGAN_GP": 0.2218,
+        "TVAE": 0.2464,
+        "CTABGAN": 0.30745,
+        "CTGAN": 0.4954499999999999,
+        "CopulaGAN": 0.5376
+      }
+    },
+    {
+      "id": "bank",
+      "name": "Bank Marketing",
+      "short_name": "Bank",
+      "task_type": "classification",
+      "metric_key": "Accuracy_Drop",
+      "best": "WGAN_GP",
+      "generators": {
+        "WGAN_GP": 0.01101,
+        "CopulaGAN": 0.01859499999999995,
+        "GaussianCopula": 0.02100999999999999,
+        "CTABGAN": 0.02519000000000001,
+        "TVAE": 0.02793999999999995,
+        "CTGAN": 0.04359499999999999
+      }
+    },
+    {
+      "id": "wine",
+      "name": "Wine Quality",
+      "short_name": "Wine",
+      "task_type": "classification",
+      "metric_key": "Accuracy_Drop",
+      "best": "TVAE",
+      "generators": {
+        "TVAE": 0.001149999999999979,
+        "WGAN_GP": 0.06804999999999999,
+        "CTABGAN": 0.08304999999999996,
+        "GaussianCopula": 0.08940000000000001,
+        "CopulaGAN": 0.1995999999999999,
+        "CTGAN": 0.2384
+      }
+    },
+    {
+      "id": "mushroom",
+      "name": "Secondary Mushroom",
+      "short_name": "Mushroom",
+      "task_type": "classification",
+      "metric_key": "Accuracy_Drop",
+      "best": "WGAN_GP",
+      "generators": {
+        "WGAN_GP": 0.1689520559347428,
+        "TVAE": 0.229400699184285,
+        "GaussianCopula": 0.2591867820875645,
+        "CopulaGAN": 0.2806209422340603,
+        "CTABGAN": 0.2815764940902281,
+        "CTGAN": 0.2900058265357083
+      }
+    },
+    {
+      "id": "cdc_diabetes",
+      "name": "CDC Diabetes",
+      "short_name": "CDC Diab.",
+      "task_type": "classification",
+      "metric_key": "Accuracy_Drop",
+      "best": "CTGAN",
+      "generators": {
+        "CTGAN": 0.003268561025803396,
+        "WGAN_GP": 0.006588174766503063,
+        "GaussianCopula": 0.01045947443406676,
+        "CTABGAN": 0.02103965489947756,
+        "TVAE": 0.02143204844071555,
+        "CopulaGAN": 0.03300063321196771
+      }
+    }
+  ],
+  "regression": [
+    {
+      "id": "metro",
+      "name": "Metro Interstate Traffic",
+      "short_name": "Metro",
+      "task_type": "regression",
+      "metric_key": "R2_Drop",
+      "best": "CTABGAN",
+      "generators": {
+        "CTABGAN": -0.07868618956590667,
+        "CopulaGAN": 0.01604106372460356,
+        "CTGAN": 0.05436272021388937,
+        "GaussianCopula": 0.1352128056092531,
+        "TVAE": 0.4923763427448706,
+        "WGAN_GP": 1.837717625909393
+      }
+    },
+    {
+      "id": "online_shopping",
+      "name": "Online Shopping (Clickstream)",
+      "short_name": "E-Shop",
+      "task_type": "regression",
+      "metric_key": "R2_Drop",
+      "best": "GaussianCopula",
+      "generators": {
+        "GaussianCopula": 0.455725314347389,
+        "CTABGAN": 0.8349643994412068,
+        "CTGAN": 1.035232947530432,
+        "TVAE": 1.253429367790266,
+        "CopulaGAN": 1.354256755505864,
+        "WGAN_GP": 73.07822037586136
+      }
+    }
+  ],
+  "win_counts": {
+    "CTGAN": 2,
+    "CopulaGAN": 0,
+    "TVAE": 1,
+    "GaussianCopula": 2,
+    "WGAN_GP": 4,
+    "CTABGAN": 1
+  },
+  "n_datasets": 10
+}
