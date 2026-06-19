@@ -83,8 +83,15 @@ def apply_pub_style() -> None:
         {
             "figure.dpi": DPI,
             "savefig.dpi": DPI,
-            "font.family": "sans-serif",
-            "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans"],
+            "font.family": "serif",
+            "font.serif": [
+                "Computer Modern Serif",
+                "Computer Modern",
+                "Latin Modern Roman",
+                "CMU Serif",
+                "DejaVu Serif",
+            ],
+            "mathtext.fontset": "cm",
             "font.size": 12,
             "axes.titlesize": 14,
             "axes.labelsize": 13,

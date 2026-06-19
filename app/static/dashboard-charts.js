@@ -7,6 +7,28 @@ if (typeof Chart !== "undefined" && typeof ChartDataLabels !== "undefined") {
   Chart.register(ChartDataLabels);
 }
 
+const CM_FONT = '"Computer Modern Serif", "Computer Modern", serif';
+
+function cmCanvasFont(size, weight = "normal") {
+  const w =
+    weight === "bold" || weight === 700 || weight === "700" || weight === 600 || weight === "600"
+      ? "bold"
+      : "normal";
+  return `${w} ${size}px ${CM_FONT}`;
+}
+
+function chartFont(size = 13, weight = "normal") {
+  const w =
+    weight === "bold" || weight === 700 || weight === "700" || weight === 600 || weight === "600"
+      ? "bold"
+      : "normal";
+  return { family: CM_FONT, size, weight: w };
+}
+
+if (typeof Chart !== "undefined") {
+  Chart.defaults.font.family = CM_FONT;
+}
+
 const GENERATOR_ORDER = [
   "CTGAN",
   "CopulaGAN",
@@ -76,7 +98,7 @@ const heatmapValuePlugin = {
       const fontSize = Math.max(10, Math.min(14, Math.floor(Math.min(w, h) * 0.36)));
 
       ctx.save();
-      ctx.font = `700 ${fontSize}px Inter, system-ui, sans-serif`;
+      ctx.font = cmCanvasFont(fontSize, "bold");
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.lineWidth = 3;
@@ -176,12 +198,12 @@ function baseOptions() {
           color: c.text,
           boxWidth: 16,
           padding: 14,
-          font: { size: 13 },
+          font: chartFont(13),
         },
       },
       tooltip: {
-        titleFont: { size: 14 },
-        bodyFont: { size: 13 },
+        titleFont: chartFont(14, "bold"),
+        bodyFont: chartFont(13),
       },
       datalabels: { display: false },
     },
@@ -196,7 +218,7 @@ function barValueLabels(c, { decimals = 2, suffix = "" } = {}) {
     align: "top",
     offset: 2,
     color: c.text,
-    font: { weight: "600", size: 13 },
+    font: chartFont(13, "bold"),
     formatter: (v) => {
       if (v == null || Number.isNaN(v)) return "";
       const n = Number(v);
@@ -331,7 +353,7 @@ function drawHeatmapLegendBar(ctx, x, y, barW, barH, scaleMeta) {
   ctx.lineWidth = 1;
   ctx.strokeRect(x, y, barW, barH);
   ctx.fillStyle = "#475569";
-  ctx.font = "500 13px Inter, system-ui, sans-serif";
+  ctx.font = cmCanvasFont(13, "normal");
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
   ctx.fillText(min.toFixed(2), x, y + barH + 8);
@@ -344,7 +366,7 @@ function drawHeatmapLegendBar(ctx, x, y, barW, barH, scaleMeta) {
     : "Green = lower utility loss (better synthetic data)";
   ctx.textAlign = "center";
   ctx.fillStyle = "#64748b";
-  ctx.font = "400 12px Inter, system-ui, sans-serif";
+  ctx.font = cmCanvasFont(12, "normal");
   ctx.fillText(hint, x + barW / 2, y + barH + 28);
   return barH + 48;
 }
@@ -359,7 +381,7 @@ function paintCdDiagram(ctx, width, height, cd, c) {
   );
   const k = gens.length;
   const fontScale = Math.max(1, width / 640);
-  const labelFont = `600 ${Math.round(12 * fontScale)}px Inter, system-ui, sans-serif`;
+  const labelFont = cmCanvasFont(Math.round(12 * fontScale), "bold");
   ctx.font = labelFont;
   const labelPad = 12 * fontScale;
   const maxLabelW = Math.max(
@@ -381,12 +403,12 @@ function paintCdDiagram(ctx, width, height, cd, c) {
     margin.left + ((rank - minRank) / Math.max(maxRank - minRank, 1)) * plotW;
 
   ctx.fillStyle = c.muted;
-  ctx.font = `600 ${Math.round(12 * fontScale)}px Inter, system-ui, sans-serif`;
+  ctx.font = cmCanvasFont(Math.round(12 * fontScale), "bold");
   ctx.textAlign = "center";
   ctx.fillText("Best", margin.left, 18 * fontScale);
   ctx.fillText("Worst", width - margin.right, 18 * fontScale);
   if (cd.chi2 != null) {
-    ctx.font = `500 ${Math.round(11 * fontScale)}px Inter, system-ui, sans-serif`;
+    ctx.font = cmCanvasFont(Math.round(11 * fontScale), "normal");
     ctx.fillText(
       `Friedman χ²=${Number(cd.chi2).toFixed(2)}, p=${Number(cd.p).toExponential(1)}`,
       width / 2,
@@ -409,7 +431,7 @@ function paintCdDiagram(ctx, width, height, cd, c) {
     ctx.lineTo(x, height - margin.bottom);
     ctx.stroke();
     ctx.fillStyle = c.muted;
-    ctx.font = `${Math.round(10 * fontScale)}px Inter, system-ui, sans-serif`;
+    ctx.font = cmCanvasFont(Math.round(10 * fontScale), "normal");
     ctx.textAlign = "center";
     ctx.fillText(String(t), x, height - 8 * fontScale);
   }
@@ -521,8 +543,8 @@ async function buildPublicationPng(canvasId) {
 
   const contentW = Math.max(logicalW, 720);
   const pad = EXPORT_PAD;
-  const titleFont = "700 22px Inter, system-ui, sans-serif";
-  const captionFont = "400 15px Inter, system-ui, sans-serif";
+  const titleFont = cmCanvasFont(22, "bold");
+  const captionFont = cmCanvasFont(15, "normal");
   const measure = document.createElement("canvas").getContext("2d");
 
   measure.font = titleFont;
@@ -703,14 +725,14 @@ function renderHeatmap(canvasId, rows, generators, metricLabel, opts = {}) {
               display: true,
               text: "Generator",
               color: c.text,
-              font: { size: 14, weight: "700" },
+              font: chartFont(14, "bold"),
               padding: { top: 8 },
             },
             ticks: {
               color: c.text,
               maxRotation: 45,
               minRotation: 0,
-              font: { size: 13, weight: "600" },
+              font: chartFont(13, "bold"),
               padding: 8,
             },
             grid: { display: false },
@@ -723,11 +745,11 @@ function renderHeatmap(canvasId, rows, generators, metricLabel, opts = {}) {
               display: true,
               text: "Dataset",
               color: c.text,
-              font: { size: 14, weight: "700" },
+              font: chartFont(14, "bold"),
             },
             ticks: {
               color: c.text,
-              font: { size: 13, weight: "600" },
+              font: chartFont(13, "bold"),
               padding: 8,
               autoSkip: false,
             },
@@ -779,7 +801,7 @@ function renderWinRateChart(canvasId, winCounts) {
               color: c.text,
               boxWidth: 14,
               padding: 10,
-              font: { size: 12 },
+              font: chartFont(12),
               generateLabels: (chart) =>
                 labels.map((g, i) => ({
                   text: g,
@@ -809,13 +831,13 @@ function renderWinRateChart(canvasId, winCounts) {
           y: {
             beginAtZero: true,
             suggestedMax: Math.max(...values, 1) + 0.5,
-            ticks: { stepSize: 1, color: c.muted, font: { size: 12 } },
+            ticks: { stepSize: 1, color: c.muted, font: chartFont(12) },
             grid: { color: c.grid },
             title: {
               display: true,
               text: "Win count (# datasets)",
               color: c.muted,
-              font: { size: 13, weight: "600" },
+              font: chartFont(13, "bold"),
             },
           },
           x: {
@@ -823,9 +845,9 @@ function renderWinRateChart(canvasId, winCounts) {
               display: true,
               text: "Generator",
               color: c.muted,
-              font: { size: 13, weight: "600" },
+              font: chartFont(13, "bold"),
             },
-            ticks: { color: c.text, font: { size: 12 } },
+            ticks: { color: c.text, font: chartFont(12) },
             grid: { display: false },
           },
         },
@@ -880,13 +902,13 @@ function renderTstrMeanSdChart(canvasId, tstrByGenerator) {
           y: {
             beginAtZero: false,
             suggestedMin: floor * 0.98,
-            ticks: { color: c.muted, font: { size: 12 } },
+            ticks: { color: c.muted, font: chartFont(12) },
             grid: { color: c.grid },
             title: {
               display: true,
               text: "Mean TSTR score",
               color: c.muted,
-              font: { size: 13, weight: "600" },
+              font: chartFont(13, "bold"),
             },
           },
           x: {
@@ -894,9 +916,9 @@ function renderTstrMeanSdChart(canvasId, tstrByGenerator) {
               display: true,
               text: "Generator",
               color: c.muted,
-              font: { size: 13, weight: "600" },
+              font: chartFont(13, "bold"),
             },
-            ticks: { color: c.text, font: { size: 12 } },
+            ticks: { color: c.text, font: chartFont(12) },
             grid: { display: false },
           },
         },
@@ -959,7 +981,7 @@ function renderTrtrTstrGrouped(canvasId, data, title) {
             display: !!title,
             text: title,
             color: c.text,
-            font: { size: 13, weight: "600" },
+            font: chartFont(13, "bold"),
             padding: { bottom: 10 },
           },
           datalabels: {
@@ -974,13 +996,13 @@ function renderTrtrTstrGrouped(canvasId, data, title) {
               ? Math.min(...tstrMeans, ...trtrMeans) - 0.05
               : 0,
             max: isReg ? undefined : 1,
-            ticks: { color: c.muted, font: { size: 12 } },
+            ticks: { color: c.muted, font: chartFont(12) },
             grid: { color: c.grid },
             title: {
               display: true,
               text: `${yLabel} (avg. over 10 models)`,
               color: c.muted,
-              font: { size: 13, weight: "600" },
+              font: chartFont(13, "bold"),
             },
           },
           x: {
@@ -988,9 +1010,9 @@ function renderTrtrTstrGrouped(canvasId, data, title) {
               display: true,
               text: "Generator",
               color: c.muted,
-              font: { size: 13, weight: "600" },
+              font: chartFont(13, "bold"),
             },
-            ticks: { color: c.text, font: { size: 12 } },
+            ticks: { color: c.text, font: chartFont(12) },
             grid: { display: false },
           },
         },
@@ -1042,7 +1064,7 @@ function renderModelDropChart(canvasId, rows, taskType, genName, title) {
             display: !!title,
             text: title,
             color: c.text,
-            font: { size: 13, weight: "600" },
+            font: chartFont(13, "bold"),
             padding: { bottom: 8 },
           },
           legend: { display: false },
@@ -1051,24 +1073,24 @@ function renderModelDropChart(canvasId, rows, taskType, genName, title) {
             anchor: "end",
             align: "right",
             color: c.text,
-            font: { weight: "600", size: 12 },
+            font: chartFont(12, "bold"),
             formatter: (v) => (v >= 1 ? v.toFixed(2) : v.toFixed(3)),
           },
         },
         scales: {
           x: {
             beginAtZero: true,
-            ticks: { color: c.muted, font: { size: 12 } },
+            ticks: { color: c.muted, font: chartFont(12) },
             grid: { color: c.grid },
             title: {
               display: true,
               text: `${dropLabel} (TRTR − TSTR)`,
               color: c.muted,
-              font: { size: 13, weight: "600" },
+              font: chartFont(13, "bold"),
             },
           },
           y: {
-            ticks: { color: c.text, font: { size: 12 } },
+            ticks: { color: c.text, font: chartFont(12) },
             grid: { display: false },
           },
         },
@@ -1120,21 +1142,21 @@ function renderRadarChart(canvasId, summary, taskType, title) {
             display: !!title,
             text: title,
             color: c.text,
-            font: { size: 13, weight: "600" },
+            font: chartFont(13, "bold"),
             padding: { bottom: 8 },
           },
           legend: {
             display: true,
             position: "bottom",
-            labels: { color: c.text, boxWidth: 14, padding: 10, font: { size: 12 } },
+            labels: { color: c.text, boxWidth: 14, padding: 10, font: chartFont(12) },
           },
         },
         scales: {
           r: {
             beginAtZero: true,
-            ticks: { color: c.muted, backdropColor: "transparent", font: { size: 11 } },
+            ticks: { color: c.muted, backdropColor: "transparent", font: chartFont(11) },
             grid: { color: c.grid },
-            pointLabels: { color: c.text, font: { size: 13 } },
+            pointLabels: { color: c.text, font: chartFont(13) },
           },
         },
       },
@@ -1183,7 +1205,7 @@ function renderSummaryBar(canvasId, data, title) {
             display: !!title,
             text: title,
             color: c.text,
-            font: { size: 13, weight: "600" },
+            font: chartFont(13, "bold"),
             padding: { bottom: 10 },
           },
           legend: {
@@ -1208,13 +1230,13 @@ function renderSummaryBar(canvasId, data, title) {
         scales: {
           y: {
             beginAtZero: true,
-            ticks: { color: c.muted, font: { size: 12 } },
+            ticks: { color: c.muted, font: chartFont(12) },
             grid: { color: c.grid },
             title: {
               display: true,
               text: metricLabel,
               color: c.muted,
-              font: { size: 13, weight: "600" },
+              font: chartFont(13, "bold"),
             },
           },
           x: {
@@ -1222,9 +1244,9 @@ function renderSummaryBar(canvasId, data, title) {
               display: true,
               text: "Generator (ranked best → worst)",
               color: c.muted,
-              font: { size: 13, weight: "600" },
+              font: chartFont(13, "bold"),
             },
-            ticks: { color: c.text, font: { size: 12 } },
+            ticks: { color: c.text, font: chartFont(12) },
             grid: { display: false },
           },
         },
@@ -1307,13 +1329,13 @@ function renderGapChart(canvasId, gapByGenerator) {
         scales: {
           y: {
             beginAtZero: true,
-            ticks: { color: c.muted, font: { size: 12 } },
+            ticks: { color: c.muted, font: chartFont(12) },
             grid: { color: c.grid },
             title: {
               display: true,
               text: "TRTR − TSTR (smaller = better synthetic data)",
               color: c.muted,
-              font: { size: 13, weight: "600" },
+              font: chartFont(13, "bold"),
             },
           },
           x: {
@@ -1321,9 +1343,9 @@ function renderGapChart(canvasId, gapByGenerator) {
               display: true,
               text: "Generator",
               color: c.muted,
-              font: { size: 13, weight: "600" },
+              font: chartFont(13, "bold"),
             },
-            ticks: { color: c.text, font: { size: 12 } },
+            ticks: { color: c.text, font: chartFont(12) },
             grid: { display: false },
           },
         },

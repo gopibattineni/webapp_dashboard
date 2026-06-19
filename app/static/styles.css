@@ -11,7 +11,7 @@
   --warning: #f59e0b;
   --danger: #ef4444;
   --radius: 10px;
-  --font: "Inter", system-ui, -apple-system, sans-serif;
+  --font: "Computer Modern Serif", "Computer Modern", serif;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
