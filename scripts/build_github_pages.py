@@ -14,9 +14,9 @@ DOCS = REPO_ROOT / "docs"
 ASSETS = DOCS / "assets"
 DATA = DOCS / "data"
 
-# GitHub project site: https://<user>.github.io/<repo>/
-GITHUB_PAGES_BASE = "/webapp_dashboard/"
 GITHUB_REPO = "https://github.com/gopibattineni/webapp_dashboard"
+# Relative asset paths work for gh-pages (root), main/docs (site root), and main/docs/ subpath.
+STATIC_PREFIX = "assets/"
 
 COPY_FILES = [
     "styles.css",
@@ -38,34 +38,47 @@ def run_export() -> None:
 
 
 def patch_dashboard_html(html: str) -> str:
-    html = html.replace("/static/", f"{GITHUB_PAGES_BASE}assets/")
+    html = html.replace("/static/", STATIC_PREFIX)
     html = html.replace('href="/"', f'href="{GITHUB_REPO}"')
-    html = html.replace(
-        'href="/dashboard"',
-        f'href="{GITHUB_PAGES_BASE}"',
-    )
+    html = html.replace('href="/dashboard"', 'href="./"')
+    html = re.sub(r'\s*data-static="[^"]*"', "", html)
     html = re.sub(
-        r'<body([^>]*)>',
-        rf'<body\1 data-static="true">',
+        r"<body([^>]*)>",
+        r'<body\1 data-static="true">',
         html,
         count=1,
     )
-    if 'github-pages-base' not in html:
-        html = html.replace(
-            "<head>",
-            f'<head>\n  <meta name="github-pages-base" content="{GITHUB_PAGES_BASE}" />',
-            1,
-        )
     # Hide local-only experiment link nav item on static site
     html = html.replace(
         f'<a href="{GITHUB_REPO}" class="nav-link">Run Experiment</a>',
         f'<a href="{GITHUB_REPO}" class="nav-link" target="_blank" rel="noopener">Web App (local)</a>',
     )
-    html = html.replace(
+  html = html.replace(
         '<a href="/dashboard" class="nav-link active">Results Dashboard</a>',
-        f'<a href="{GITHUB_PAGES_BASE}" class="nav-link active">Results Dashboard</a>',
+        '<a href="./" class="nav-link active">Results Dashboard</a>',
     )
     return html
+
+
+def write_root_redirect() -> None:
+    """When Pages serves main/(root), send visitors to docs/ instead of README."""
+    (REPO_ROOT / ".nojekyll").write_text("", encoding="utf-8")
+    (REPO_ROOT / "index.html").write_text(
+        """<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="refresh" content="0; url=docs/" />
+  <title>TRTR/TSTR Results Dashboard</title>
+  <script>location.replace("docs/");</script>
+</head>
+<body>
+  <p><a href="docs/">Open TRTR/TSTR Results Dashboard</a></p>
+</body>
+</html>
+""",
+        encoding="utf-8",
+    )
 
 
 def build() -> Path:
@@ -90,9 +103,13 @@ def build() -> Path:
 
     html = (STATIC / "dashboard.html").read_text(encoding="utf-8")
     (DOCS / "index.html").write_text(patch_dashboard_html(html), encoding="utf-8")
+    (DOCS / ".nojekyll").write_text("", encoding="utf-8")
+    write_root_redirect()
 
+    live = "https://gopibattineni.github.io/webapp_dashboard/"
     print(f"GitHub Pages site built at {DOCS}")
-    print(f"Live URL (after deploy): https://gopibattineni.github.io{GITHUB_PAGES_BASE}")
+    print(f"Live URL (after deploy): {live}")
+    print("Pages source: main /docs  OR  gh-pages /(root)  (see README)")
     return DOCS
 
 
