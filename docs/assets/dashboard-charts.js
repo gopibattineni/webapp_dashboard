@@ -34,6 +34,15 @@ const GEN_SHORT = {
   CTABGAN: "CTAB",
 };
 
+const GEN_LABEL = {
+  CTGAN: "CTGAN",
+  CopulaGAN: "CopulaGAN",
+  TVAE: "TVAE",
+  GaussianCopula: "GaussianCopula",
+  WGAN_GP: "WGAN-GP",
+  CTABGAN: "CTABGAN",
+};
+
 const chartRegistry = {};
 
 const heatmapValuePlugin = {
@@ -895,7 +904,14 @@ function renderCdDiagram(canvasId, cd) {
     (a, b) => cd.avg_ranks[a] - cd.avg_ranks[b]
   );
   const k = gens.length;
-  const margin = { top: 36, right: 28, bottom: 28, left: 28 };
+  const labelFont = "600 12px Inter, system-ui, sans-serif";
+  ctx.font = labelFont;
+  const labelPad = 12;
+  const maxLabelW = Math.max(
+    ...gens.map((g) => ctx.measureText(GEN_LABEL[g] || g).width),
+    48
+  );
+  const margin = { top: 36, right: 28, bottom: 28, left: maxLabelW + labelPad };
   const plotW = width - margin.left - margin.right;
   const rowH = (height - margin.top - margin.bottom) / Math.max(k, 1);
   const minRank = 1;
@@ -969,10 +985,10 @@ function renderCdDiagram(canvasId, cd) {
     ctx.stroke();
 
     ctx.fillStyle = c.text;
-    ctx.font = "600 12px Inter, system-ui, sans-serif";
+    ctx.font = labelFont;
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
-    ctx.fillText(GEN_SHORT[gen] || gen, margin.left - 8, y);
+    ctx.fillText(GEN_LABEL[gen] || gen, margin.left - labelPad / 2, y);
     ctx.textAlign = "left";
     ctx.fillText(`(${rank.toFixed(2)})`, x + half + 6, y);
   });
