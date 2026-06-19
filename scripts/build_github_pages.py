@@ -8,15 +8,15 @@ import subprocess
 import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-WEBAPP = REPO_ROOT / "webapp"
-STATIC = WEBAPP / "app" / "static"
+REPO_ROOT = Path(__file__).resolve().parents[1]
+STATIC = REPO_ROOT / "app" / "static"
 DOCS = REPO_ROOT / "docs"
 ASSETS = DOCS / "assets"
 DATA = DOCS / "data"
 
 # GitHub project site: https://<user>.github.io/<repo>/
-GITHUB_PAGES_BASE = "/SYNTH/"
+GITHUB_PAGES_BASE = "/webapp_dashboard/"
+GITHUB_REPO = "https://github.com/gopibattineni/webapp_dashboard"
 
 COPY_FILES = [
     "styles.css",
@@ -31,15 +31,15 @@ COPY_FILES = [
 
 def run_export() -> None:
     subprocess.run(
-        [sys.executable, str(WEBAPP / "scripts" / "export_dashboard_data.py")],
+        [sys.executable, str(REPO_ROOT / "scripts" / "export_dashboard_data.py")],
         check=True,
-        cwd=WEBAPP,
+        cwd=REPO_ROOT,
     )
 
 
 def patch_dashboard_html(html: str) -> str:
     html = html.replace("/static/", f"{GITHUB_PAGES_BASE}assets/")
-    html = html.replace('href="/"', f'href="https://github.com/gopibattineni/SYNTH"')
+    html = html.replace('href="/"', f'href="{GITHUB_REPO}"')
     html = html.replace(
         'href="/dashboard"',
         f'href="{GITHUB_PAGES_BASE}"',
@@ -58,8 +58,8 @@ def patch_dashboard_html(html: str) -> str:
         )
     # Hide local-only experiment link nav item on static site
     html = html.replace(
-        '<a href="https://github.com/gopibattineni/SYNTH" class="nav-link">Run Experiment</a>',
-        '<a href="https://github.com/gopibattineni/SYNTH/tree/main/webapp" class="nav-link" target="_blank" rel="noopener">Web App (local)</a>',
+        f'<a href="{GITHUB_REPO}" class="nav-link">Run Experiment</a>',
+        f'<a href="{GITHUB_REPO}" class="nav-link" target="_blank" rel="noopener">Web App (local)</a>',
     )
     html = html.replace(
         '<a href="/dashboard" class="nav-link active">Results Dashboard</a>',
