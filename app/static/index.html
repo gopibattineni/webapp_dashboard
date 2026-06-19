@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SYNTH Data Audit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/styles.css?v=5" />
+</head>
+<body>
+  <header>
+    <div class="container header-inner">
+      <a class="header-logo header-logo-left" href="/" aria-label="LERO">
+        <img src="/static/lero-logo.png" alt="LERO" />
+      </a>
+      <div class="header-title">
+        <h1>SYNTH Data Audit</h1>
+        <p class="subtitle">Fidelity · Privacy · Utility — FORGE experimental setup</p>
+      </div>
+      <a class="header-logo header-logo-right" href="/" aria-label="BDS">
+        <img src="/static/bds-logo.png" alt="BDS Biocomputing and Developmental Systems" />
+      </a>
+    </div>
+  </header>
+
+  <nav class="container top-nav">
+    <a href="/" class="nav-link active">Run Experiment</a>
+    <a href="/dashboard" class="nav-link">Results Dashboard</a>
+  </nav>
+
+  <main class="container">
+    <!-- Step 1: Load UCI Dataset -->
+    <section class="card" id="step-load">
+      <h2>1. Load UCI Dataset</h2>
+      <div class="form-row">
+        <label for="uci-id">UCI Repository ID</label>
+        <input type="number" id="uci-id" value="17" min="1" placeholder="e.g. 17 = Breast Cancer" />
+        <button id="btn-load" class="btn primary">Load Dataset</button>
+      </div>
+      <div class="presets">
+        <div class="preset-filters">
+          <label for="task-type-filter">Problem type</label>
+          <select id="task-type-filter">
+            <option value="all">All</option>
+            <option value="classification">Classification</option>
+            <option value="regression">Regression</option>
+          </select>
+        </div>
+        <span>Presets:</span>
+        <div id="preset-buttons" class="preset-list"></div>
+      </div>
+      <div id="load-info" class="info-panel hidden"></div>
+      <div id="preview-table" class="table-wrap hidden"></div>
+    </section>
+
+    <!-- Step 2: Preprocess -->
+    <section class="card" id="step-preprocess">
+      <h2>2. Preprocess</h2>
+      <p class="hint">Handles missing values (? → impute), encodes categoricals, subsamples, then splits <strong>80% for generators / 20% holdout</strong>.</p>
+      <div class="form-grid">
+        <div>
+          <label for="target-col">Target column</label>
+          <input type="text" id="target-col" placeholder="auto (last column)" />
+        </div>
+        <div>
+          <label for="n-subsample">Subsample size</label>
+          <input type="number" id="n-subsample" value="1000" min="100" />
+        </div>
+        <div>
+          <label for="test-size">Holdout fraction</label>
+          <input type="number" id="test-size" value="0.2" min="0.1" max="0.4" step="0.05" />
+        </div>
+        <div>
+          <label for="seed">Random seed</label>
+          <input type="number" id="seed" value="42" />
+        </div>
+      </div>
+      <button id="btn-preprocess" class="btn primary" disabled>Preprocess</button>
+      <div id="preprocess-info" class="info-panel hidden"></div>
+    </section>
+
+    <!-- Step 3: Experiment Setups -->
+    <section class="card" id="step-experiment">
+      <h2>3. Experimental Setups</h2>
+      <div class="setup-grid">
+        <label class="setup-card">
+          <input type="checkbox" id="run-fidelity" checked />
+          <div>
+            <strong>Fidelity</strong>
+            <p>SDV quality, KS complement, JS divergence, Wasserstein, Gower similarity, MMD, C2ST</p>
+          </div>
+        </label>
+        <label class="setup-card">
+          <input type="checkbox" id="run-privacy" checked />
+          <div>
+            <strong>Privacy</strong>
+            <p>NN / DCR, Mahalanobis, Hungarian (cosine &amp; Mahalanobis), Membership Inference Attack (MIA)</p>
+          </div>
+        </label>
+        <label class="setup-card">
+          <input type="checkbox" id="run-utility" checked />
+          <div>
+            <strong>Utility</strong>
+            <p>TRTR vs TSTR — 10 classifiers/regressors × 10 seeds, leak-safe holdout</p>
+          </div>
+        </label>
+      </div>
+
+      <div class="form-grid">
+        <div>
+          <label for="n-synthetic">Synthetic rows per generator</label>
+          <input type="number" id="n-synthetic" value="1000" min="100" />
+        </div>
+        <div class="checkbox-row">
+          <label>
+            <input type="checkbox" id="fast-mode" />
+            Fast mode (GaussianCopula only — for testing)
+          </label>
+        </div>
+      </div>
+
+      <p class="hint warn-hint"><strong>Important:</strong> Leave <em>Fast mode</em> unchecked for all 6 generators. Fast mode runs only GaussianCopula (1 generator).</p>
+      <p class="hint">Full run: CTABGAN, WGAN-GP, CTGAN, CopulaGAN, TVAE, GaussianCopula — each evaluated with 10 classifiers/regressors × 10 seeds.</p>
+      <button id="btn-run" class="btn primary large" disabled>Run Experiment</button>
+
+      <div id="progress-panel" class="progress-panel hidden">
+        <div class="progress-bar"><div id="progress-fill"></div></div>
+        <ul id="progress-log"></ul>
+      </div>
+    </section>
+
+    <!-- Results -->
+    <section class="card hidden" id="step-results">
+      <h2>Results</h2>
+      <div class="tabs">
+        <button class="tab active" data-tab="fidelity">Fidelity</button>
+        <button class="tab" data-tab="privacy">Privacy</button>
+        <button class="tab" data-tab="utility">Utility</button>
+      </div>
+      <div id="tab-fidelity" class="tab-content active"></div>
+      <div id="tab-privacy" class="tab-content"></div>
+      <div id="tab-utility" class="tab-content"></div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>80% generator training · 20% holdout · No data leakage · Matches <em>Single run_Data_leak_Synth_Quality</em> pipeline</p>
+    </div>
+  </footer>
+
+  <script src="/static/app.js?v=5"></script>
+</body>
+</html>

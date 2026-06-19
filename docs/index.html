@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="github-pages-base" content="/SYNTH/" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TRTR/TSTR Results Dashboard — SYNTH</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/SYNTH/assets/styles.css?v=5" />
+  <link rel="stylesheet" href="/SYNTH/assets/dashboard.css?v=4" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@2.0.1/dist/chartjs-chart-matrix.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+</head>
+<body data-static="false" data-static="true">
+  <header>
+    <div class="container header-inner">
+      <a class="header-logo header-logo-left" href="https://github.com/gopibattineni/SYNTH" aria-label="LERO">
+        <img src="/SYNTH/assets/lero-logo.png" alt="LERO" />
+      </a>
+      <div class="header-title">
+        <h1>TRTR / TSTR Results Dashboard</h1>
+        <p class="subtitle">Publication-ready figures · 10 datasets · 6 generators · 10 models × 10 seeds</p>
+      </div>
+      <a class="header-logo header-logo-right" href="https://github.com/gopibattineni/SYNTH" aria-label="BDS">
+        <img src="/SYNTH/assets/bds-logo.png" alt="BDS" />
+      </a>
+    </div>
+  </header>
+
+  <nav class="container top-nav">
+    <a href="https://github.com/gopibattineni/SYNTH/tree/main/webapp" class="nav-link" target="_blank" rel="noopener">Web App (local)</a>
+    <a href="/SYNTH/" class="nav-link active">Results Dashboard</a>
+    <button type="button" id="btn-paper-theme" class="nav-link paper-toggle" title="White background for paper screenshots">Paper theme</button>
+  </nav>
+
+  <main class="container">
+    <!-- Global benchmark figures (all datasets) -->
+    <section class="card paper-section" id="benchmark-overview">
+      <div class="section-header">
+        <div>
+          <h2>Benchmark overview (all datasets)</h2>
+          <p class="hint">Recommended for paper: heatmaps show utility loss across the full benchmark; win-rate counts how often each generator ranks best.</p>
+        </div>
+      </div>
+      <div class="figure-grid figure-grid-overview">
+        <div class="figure-card figure-card-heatmap">
+          <div class="figure-heading">
+            <h3 class="figure-title">Fig. A — Classification utility loss</h3>
+            <p class="figure-caption">Avg. accuracy drop per dataset × generator (lower = better synthetic data)</p>
+          </div>
+          <div class="figure-actions">
+            <button type="button" class="btn-export" data-export="heatmap-clf" data-filename="fig_heatmap_classification.png">PNG</button>
+          </div>
+          <div class="chart-box chart-box-heatmap"><canvas id="heatmap-clf"></canvas></div>
+          <div class="heatmap-scale-legend" id="heatmap-legend-clf"></div>
+        </div>
+        <div class="figure-card figure-card-heatmap">
+          <div class="figure-heading">
+            <h3 class="figure-title">Fig. B — Regression utility loss</h3>
+            <p class="figure-caption">Avg. R² drop per dataset × generator (lower = better)</p>
+          </div>
+          <div class="figure-actions">
+            <button type="button" class="btn-export" data-export="heatmap-reg" data-filename="fig_heatmap_regression.png">PNG</button>
+          </div>
+          <div class="chart-box chart-box-heatmap"><canvas id="heatmap-reg"></canvas></div>
+          <div class="heatmap-scale-legend" id="heatmap-legend-reg"></div>
+        </div>
+        <div class="figure-card figure-card-wide">
+          <div class="figure-heading">
+            <h3 class="figure-title">Fig. C — Generator win-rate</h3>
+            <p class="figure-caption">Number of datasets where each generator has the lowest utility loss</p>
+          </div>
+          <div class="figure-actions">
+            <button type="button" class="btn-export" data-export="chart-win-rate" data-filename="fig_generator_winrate.png">PNG</button>
+          </div>
+          <div class="chart-box chart-box-tall"><canvas id="chart-win-rate"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="dashboard-layout">
+      <aside class="card dataset-sidebar" id="dataset-sidebar">
+        <h2>Datasets</h2>
+        <div class="sidebar-filters">
+          <label for="dash-task-filter">Problem type</label>
+          <select id="dash-task-filter">
+            <option value="all">All</option>
+            <option value="classification">Classification</option>
+            <option value="regression">Regression</option>
+          </select>
+        </div>
+        <div id="dataset-list" class="dataset-list">
+          <p class="hint">Loading datasets…</p>
+        </div>
+      </aside>
+
+      <section class="dashboard-main">
+        <div id="dashboard-placeholder" class="card placeholder-card">
+          <h2>Select a dataset</h2>
+          <p class="hint">Click a dataset for per-dataset paper figures, TRTR baseline, and full comparison tables.</p>
+        </div>
+
+        <div id="dashboard-content" class="hidden">
+          <div class="card dashboard-header-card">
+            <div class="dashboard-header-top">
+              <div>
+                <h2 id="ds-title">Dataset</h2>
+                <p id="ds-meta" class="hint"></p>
+              </div>
+              <div id="ds-highlights" class="highlight-badges"></div>
+            </div>
+            <div class="figure-card">
+              <div class="figure-actions">
+                <button type="button" class="btn-export" data-export="summary-chart" data-filename="fig_generator_ranking.png">PNG</button>
+              </div>
+              <div class="chart-box"><canvas id="summary-chart"></canvas></div>
+            </div>
+          </div>
+
+          <div class="card paper-section">
+            <h2>Per-dataset paper figures</h2>
+            <p class="hint">TRTR vs TSTR bars compare real vs synthetic training (averaged over 10 downstream models). Model-drop chart shows which learners are most affected.</p>
+            <div class="form-row">
+              <label for="paper-gen-select">Generator (model-drop chart)</label>
+              <select id="paper-gen-select"></select>
+            </div>
+            <div class="figure-grid figure-grid-2">
+              <div class="figure-card">
+                <div class="figure-actions">
+                  <button type="button" class="btn-export" data-export="chart-trtr-tstr" data-filename="fig_trtr_tstr.png">PNG</button>
+                </div>
+                <div class="chart-box"><canvas id="chart-trtr-tstr"></canvas></div>
+              </div>
+              <div class="figure-card">
+                <div class="figure-actions">
+                  <button type="button" class="btn-export" data-export="chart-model-drop" data-filename="fig_model_drop.png">PNG</button>
+                </div>
+                <div class="chart-box"><canvas id="chart-model-drop"></canvas></div>
+              </div>
+            </div>
+            <div class="figure-card figure-card-wide">
+              <div class="figure-actions">
+                <button type="button" class="btn-export" data-export="chart-radar" data-filename="fig_radar_metrics.png">PNG</button>
+              </div>
+              <div class="chart-box chart-box-radar"><canvas id="chart-radar"></canvas></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="tabs" id="result-tabs">
+              <button type="button" class="tab active" data-tab="overview">Tables</button>
+              <button type="button" class="tab" data-tab="trtr">TRTR Baseline</button>
+              <button type="button" class="tab" data-tab="summary">Generator Summary</button>
+              <button type="button" class="tab" data-tab="all">All Comparisons</button>
+              <button type="button" class="tab hidden" data-tab="quality" id="tab-quality">Quality</button>
+              <button type="button" class="tab" data-tab="generators">By Generator</button>
+            </div>
+
+            <div id="tab-overview" class="tab-content active">
+              <div id="overview-summary" class="table-wrap"></div>
+              <h3 class="section-title">TRTR baseline (top 3 models)</h3>
+              <div id="overview-trtr" class="table-wrap"></div>
+            </div>
+
+            <div id="tab-trtr" class="tab-content">
+              <div id="trtr-table" class="table-wrap table-wrap-tall"></div>
+            </div>
+
+            <div id="tab-summary" class="tab-content">
+              <div id="summary-table" class="table-wrap"></div>
+            </div>
+
+            <div id="tab-all" class="tab-content">
+              <div class="form-row">
+                <label for="gen-filter">Filter generator</label>
+                <select id="gen-filter">
+                  <option value="all">All generators</option>
+                </select>
+              </div>
+              <div id="all-table" class="table-wrap table-wrap-tall"></div>
+            </div>
+
+            <div id="tab-quality" class="tab-content">
+              <div id="quality-table" class="table-wrap"></div>
+            </div>
+
+            <div id="tab-generators" class="tab-content">
+              <div class="gen-pills" id="gen-pills"></div>
+              <div id="generator-table" class="table-wrap table-wrap-tall"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="container">
+    <p>Source: <code>Synthetic_Data_Audit/SYNTH/Single run_Data_leak_Synth_Quality</code> · Use <strong>Paper theme</strong> + <strong>PNG</strong> for figure export</p>
+  </footer>
+
+  <script src="/SYNTH/assets/utils.js?v=1"></script>
+  <script src="/SYNTH/assets/dashboard-charts.js?v=5"></script>
+  <script src="/SYNTH/assets/dashboard.js?v=3"></script>
+</body>
+</html>
