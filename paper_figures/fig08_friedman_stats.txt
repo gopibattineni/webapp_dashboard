@@ -1,0 +1,21 @@
+Friedman test (dataset blocks)
+  chi2 = 47.428571
+  p    = 4.645855e-09
+
+Average ranks (lower is better):
+  CTABGAN         1.1000
+  WGAN-GP         2.2000
+  CTGAN           2.8000
+  TVAE            3.9000
+  GaussianCopula  5.0000
+  CopulaGAN       6.0000
+
+Nemenyi post-hoc p-values:
+generator          CTGAN     CopulaGAN      TVAE  GaussianCopula   WGAN_GP       CTABGAN
+generator                                                                               
+CTGAN           1.000000  1.821040e-03  0.777005        0.090215  0.979939  3.240659e-01
+CopulaGAN       0.001821  1.000000e+00  0.121073        0.839370  0.000082  7.070780e-08
+TVAE            0.777005  1.210729e-01  1.000000        0.777005  0.324066  1.060313e-02
+GaussianCopula  0.090215  8.393700e-01  0.777005        1.000000  0.010603  4.616727e-05
+WGAN_GP         0.979939  8.159127e-05  0.324066        0.010603  1.000000  7.770047e-01
+CTABGAN         0.324066  7.070780e-08  0.010603        0.000046  0.777005  1.000000e+00

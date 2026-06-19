@@ -22,6 +22,14 @@
         "GaussianCopula": 0.101140350877193,
         "CTGAN": 0.2421929824561403,
         "CopulaGAN": 0.602280701754386
+      },
+      "tstr_generators": {
+        "CTGAN": 0.7193859649122807,
+        "CopulaGAN": 0.3592982456140351,
+        "TVAE": 0.9264035087719298,
+        "GaussianCopula": 0.860438596491228,
+        "WGAN_GP": 0.9393859649122807,
+        "CTABGAN": 0.882719298245614
       }
     },
     {
@@ -38,6 +46,14 @@
         "CopulaGAN": 0.09830441640378543,
         "GaussianCopula": 0.0995820189274447,
         "CTGAN": 0.1067770767613038
+      },
+      "tstr_generators": {
+        "CTGAN": 0.73068349106204,
+        "CopulaGAN": 0.7391561514195584,
+        "TVAE": 0.7553233438485804,
+        "GaussianCopula": 0.7378785488958991,
+        "WGAN_GP": 0.8014616193480547,
+        "CTABGAN": 0.7902944269190326
       }
     },
     {
@@ -54,6 +70,14 @@
         "CopulaGAN": 0.1572,
         "CTABGAN": 0.2340999999999999,
         "WGAN_GP": 0.4702499999999999
+      },
+      "tstr_generators": {
+        "CTGAN": 0.6841999999999999,
+        "CopulaGAN": 0.6629,
+        "TVAE": 0.66975,
+        "GaussianCopula": 0.664,
+        "WGAN_GP": 0.34985,
+        "CTABGAN": 0.5860000000000001
       }
     },
     {
@@ -70,6 +94,14 @@
         "CTABGAN": 0.30745,
         "CTGAN": 0.4954499999999999,
         "CopulaGAN": 0.5376
+      },
+      "tstr_generators": {
+        "CTGAN": 0.1336,
+        "CopulaGAN": 0.09145,
+        "TVAE": 0.38265000000000005,
+        "GaussianCopula": 0.46720000000000006,
+        "WGAN_GP": 0.40725,
+        "CTABGAN": 0.3216
       }
     },
     {
@@ -86,6 +118,14 @@
         "CTABGAN": 0.02519000000000001,
         "TVAE": 0.02793999999999995,
         "CTGAN": 0.04359499999999999
+      },
+      "tstr_generators": {
+        "CTGAN": 0.82964,
+        "CopulaGAN": 0.8546400000000001,
+        "TVAE": 0.8452949999999999,
+        "GaussianCopula": 0.852225,
+        "WGAN_GP": 0.8622249999999999,
+        "CTABGAN": 0.8480449999999999
       }
     },
     {
@@ -102,6 +142,14 @@
         "GaussianCopula": 0.08940000000000001,
         "CopulaGAN": 0.1995999999999999,
         "CTGAN": 0.2384
+      },
+      "tstr_generators": {
+        "CTGAN": 0.25315,
+        "CopulaGAN": 0.29195000000000004,
+        "TVAE": 0.4904,
+        "GaussianCopula": 0.40214999999999995,
+        "WGAN_GP": 0.42349999999999993,
+        "CTABGAN": 0.4085
       }
     },
     {
@@ -118,6 +166,14 @@
         "CopulaGAN": 0.2806209422340603,
         "CTABGAN": 0.2815764940902281,
         "CTGAN": 0.2900058265357083
+      },
+      "tstr_generators": {
+        "CTGAN": 0.5428150491093724,
+        "CopulaGAN": 0.5521999334110206,
+        "TVAE": 0.6034201764607958,
+        "GaussianCopula": 0.5736340935575162,
+        "WGAN_GP": 0.663868819710338,
+        "CTABGAN": 0.5512443815548527
       }
     },
     {
@@ -134,6 +190,14 @@
         "CTABGAN": 0.02103965489947756,
         "TVAE": 0.02143204844071555,
         "CopulaGAN": 0.03300063321196771
+      },
+      "tstr_generators": {
+        "CTGAN": 0.8475215687826501,
+        "CopulaGAN": 0.8177894965964857,
+        "TVAE": 0.8293580813677378,
+        "GaussianCopula": 0.8403306553743866,
+        "WGAN_GP": 0.8442019550419502,
+        "CTABGAN": 0.8297504749089757
       }
     }
   ],
@@ -152,6 +216,14 @@
         "GaussianCopula": 0.1352128056092531,
         "TVAE": 0.4923763427448706,
         "WGAN_GP": 1.837717625909393
+      },
+      "tstr_generators": {
+        "CTGAN": -0.2346212622332357,
+        "CopulaGAN": -0.19629960574394992,
+        "TVAE": -0.6726348847642168,
+        "GaussianCopula": -0.3154713476285994,
+        "WGAN_GP": -2.01797616792874,
+        "CTABGAN": -0.10157235245343962
       }
     },
     {
@@ -168,6 +240,256 @@
         "TVAE": 1.253429367790266,
         "CopulaGAN": 1.354256755505864,
         "WGAN_GP": 73.07822037586136
+      },
+      "tstr_generators": {
+        "CTGAN": -0.2606707629068178,
+        "CopulaGAN": -0.5796945708822493,
+        "TVAE": -0.4788671831666512,
+        "GaussianCopula": 0.31883687027622576,
+        "WGAN_GP": -72.30365819123774,
+        "CTABGAN": -0.06040221481759206
+      }
+    }
+  ],
+  "tstr_all": [
+    {
+      "id": "cancer",
+      "name": "Breast Cancer Wisconsin",
+      "short_name": "Cancer",
+      "task_type": "classification",
+      "metric_key": "Accuracy_Drop",
+      "best": "WGAN_GP",
+      "generators": {
+        "WGAN_GP": 0.02219298245614042,
+        "TVAE": 0.03517543859649121,
+        "CTABGAN": 0.07885964912280703,
+        "GaussianCopula": 0.101140350877193,
+        "CTGAN": 0.2421929824561403,
+        "CopulaGAN": 0.602280701754386
+      },
+      "tstr_generators": {
+        "CTGAN": 0.7193859649122807,
+        "CopulaGAN": 0.3592982456140351,
+        "TVAE": 0.9264035087719298,
+        "GaussianCopula": 0.860438596491228,
+        "WGAN_GP": 0.9393859649122807,
+        "CTABGAN": 0.882719298245614
+      }
+    },
+    {
+      "id": "magic",
+      "name": "MAGIC Gamma Telescope",
+      "short_name": "MAGIC",
+      "task_type": "classification",
+      "metric_key": "Accuracy_Drop",
+      "best": "WGAN_GP",
+      "generators": {
+        "WGAN_GP": 0.03599894847528913,
+        "CTABGAN": 0.04716614090431118,
+        "TVAE": 0.08213722397476339,
+        "CopulaGAN": 0.09830441640378543,
+        "GaussianCopula": 0.0995820189274447,
+        "CTGAN": 0.1067770767613038
+      },
+      "tstr_generators": {
+        "CTGAN": 0.73068349106204,
+        "CopulaGAN": 0.7391561514195584,
+        "TVAE": 0.7553233438485804,
+        "GaussianCopula": 0.7378785488958991,
+        "WGAN_GP": 0.8014616193480547,
+        "CTABGAN": 0.7902944269190326
+      }
+    },
+    {
+      "id": "adult",
+      "name": "Adult Census",
+      "short_name": "Adult",
+      "task_type": "classification",
+      "metric_key": "Accuracy_Drop",
+      "best": "CTGAN",
+      "generators": {
+        "CTGAN": 0.1359,
+        "TVAE": 0.15035,
+        "GaussianCopula": 0.1561,
+        "CopulaGAN": 0.1572,
+        "CTABGAN": 0.2340999999999999,
+        "WGAN_GP": 0.4702499999999999
+      },
+      "tstr_generators": {
+        "CTGAN": 0.6841999999999999,
+        "CopulaGAN": 0.6629,
+        "TVAE": 0.66975,
+        "GaussianCopula": 0.664,
+        "WGAN_GP": 0.34985,
+        "CTABGAN": 0.5860000000000001
+      }
+    },
+    {
+      "id": "forest_cover",
+      "name": "Forest Cover Type",
+      "short_name": "Forest",
+      "task_type": "classification",
+      "metric_key": "Accuracy_Drop",
+      "best": "GaussianCopula",
+      "generators": {
+        "GaussianCopula": 0.16185,
+        "WGAN_GP": 0.2218,
+        "TVAE": 0.2464,
+        "CTABGAN": 0.30745,
+        "CTGAN": 0.4954499999999999,
+        "CopulaGAN": 0.5376
+      },
+      "tstr_generators": {
+        "CTGAN": 0.1336,
+        "CopulaGAN": 0.09145,
+        "TVAE": 0.38265000000000005,
+        "GaussianCopula": 0.46720000000000006,
+        "WGAN_GP": 0.40725,
+        "CTABGAN": 0.3216
+      }
+    },
+    {
+      "id": "bank",
+      "name": "Bank Marketing",
+      "short_name": "Bank",
+      "task_type": "classification",
+      "metric_key": "Accuracy_Drop",
+      "best": "WGAN_GP",
+      "generators": {
+        "WGAN_GP": 0.01101,
+        "CopulaGAN": 0.01859499999999995,
+        "GaussianCopula": 0.02100999999999999,
+        "CTABGAN": 0.02519000000000001,
+        "TVAE": 0.02793999999999995,
+        "CTGAN": 0.04359499999999999
+      },
+      "tstr_generators": {
+        "CTGAN": 0.82964,
+        "CopulaGAN": 0.8546400000000001,
+        "TVAE": 0.8452949999999999,
+        "GaussianCopula": 0.852225,
+        "WGAN_GP": 0.8622249999999999,
+        "CTABGAN": 0.8480449999999999
+      }
+    },
+    {
+      "id": "wine",
+      "name": "Wine Quality",
+      "short_name": "Wine",
+      "task_type": "classification",
+      "metric_key": "Accuracy_Drop",
+      "best": "TVAE",
+      "generators": {
+        "TVAE": 0.001149999999999979,
+        "WGAN_GP": 0.06804999999999999,
+        "CTABGAN": 0.08304999999999996,
+        "GaussianCopula": 0.08940000000000001,
+        "CopulaGAN": 0.1995999999999999,
+        "CTGAN": 0.2384
+      },
+      "tstr_generators": {
+        "CTGAN": 0.25315,
+        "CopulaGAN": 0.29195000000000004,
+        "TVAE": 0.4904,
+        "GaussianCopula": 0.40214999999999995,
+        "WGAN_GP": 0.42349999999999993,
+        "CTABGAN": 0.4085
+      }
+    },
+    {
+      "id": "mushroom",
+      "name": "Secondary Mushroom",
+      "short_name": "Mushroom",
+      "task_type": "classification",
+      "metric_key": "Accuracy_Drop",
+      "best": "WGAN_GP",
+      "generators": {
+        "WGAN_GP": 0.1689520559347428,
+        "TVAE": 0.229400699184285,
+        "GaussianCopula": 0.2591867820875645,
+        "CopulaGAN": 0.2806209422340603,
+        "CTABGAN": 0.2815764940902281,
+        "CTGAN": 0.2900058265357083
+      },
+      "tstr_generators": {
+        "CTGAN": 0.5428150491093724,
+        "CopulaGAN": 0.5521999334110206,
+        "TVAE": 0.6034201764607958,
+        "GaussianCopula": 0.5736340935575162,
+        "WGAN_GP": 0.663868819710338,
+        "CTABGAN": 0.5512443815548527
+      }
+    },
+    {
+      "id": "cdc_diabetes",
+      "name": "CDC Diabetes",
+      "short_name": "CDC Diab.",
+      "task_type": "classification",
+      "metric_key": "Accuracy_Drop",
+      "best": "CTGAN",
+      "generators": {
+        "CTGAN": 0.003268561025803396,
+        "WGAN_GP": 0.006588174766503063,
+        "GaussianCopula": 0.01045947443406676,
+        "CTABGAN": 0.02103965489947756,
+        "TVAE": 0.02143204844071555,
+        "CopulaGAN": 0.03300063321196771
+      },
+      "tstr_generators": {
+        "CTGAN": 0.8475215687826501,
+        "CopulaGAN": 0.8177894965964857,
+        "TVAE": 0.8293580813677378,
+        "GaussianCopula": 0.8403306553743866,
+        "WGAN_GP": 0.8442019550419502,
+        "CTABGAN": 0.8297504749089757
+      }
+    },
+    {
+      "id": "metro",
+      "name": "Metro Interstate Traffic",
+      "short_name": "Metro",
+      "task_type": "regression",
+      "metric_key": "R2_Drop",
+      "best": "CTABGAN",
+      "generators": {
+        "CTABGAN": -0.07868618956590667,
+        "CopulaGAN": 0.01604106372460356,
+        "CTGAN": 0.05436272021388937,
+        "GaussianCopula": 0.1352128056092531,
+        "TVAE": 0.4923763427448706,
+        "WGAN_GP": 1.837717625909393
+      },
+      "tstr_generators": {
+        "CTGAN": -0.2346212622332357,
+        "CopulaGAN": -0.19629960574394992,
+        "TVAE": -0.6726348847642168,
+        "GaussianCopula": -0.3154713476285994,
+        "WGAN_GP": -2.01797616792874,
+        "CTABGAN": -0.10157235245343962
+      }
+    },
+    {
+      "id": "online_shopping",
+      "name": "Online Shopping (Clickstream)",
+      "short_name": "E-Shop",
+      "task_type": "regression",
+      "metric_key": "R2_Drop",
+      "best": "GaussianCopula",
+      "generators": {
+        "GaussianCopula": 0.455725314347389,
+        "CTABGAN": 0.8349643994412068,
+        "CTGAN": 1.035232947530432,
+        "TVAE": 1.253429367790266,
+        "CopulaGAN": 1.354256755505864,
+        "WGAN_GP": 73.07822037586136
+      },
+      "tstr_generators": {
+        "CTGAN": -0.2606707629068178,
+        "CopulaGAN": -0.5796945708822493,
+        "TVAE": -0.4788671831666512,
+        "GaussianCopula": 0.31883687027622576,
+        "WGAN_GP": -72.30365819123774,
+        "CTABGAN": -0.06040221481759206
       }
     }
   ],
@@ -178,6 +500,86 @@
     "GaussianCopula": 2,
     "WGAN_GP": 4,
     "CTABGAN": 1
+  },
+  "tstr_by_generator": {
+    "CTGAN": {
+      "mean": 0.4245704048726289,
+      "std": 0.4290698502411791,
+      "n": 100
+    },
+    "CopulaGAN": {
+      "mean": 0.35933896504149004,
+      "std": 0.4789024629072453,
+      "n": 100
+    },
+    "TVAE": {
+      "mean": 0.43510980425181756,
+      "std": 0.5528539236935541,
+      "n": 100
+    },
+    "GaussianCopula": {
+      "mean": 0.5401222416966656,
+      "std": 0.3811368364143791,
+      "n": 100
+    },
+    "WGAN_GP": {
+      "mean": -6.902989100015386,
+      "std": 69.88752216280378,
+      "n": 100
+    },
+    "CTABGAN": {
+      "mean": 0.5056179014357444,
+      "std": 0.35190846910568585,
+      "n": 100
+    }
+  },
+  "gap_by_generator": {
+    "CTGAN": {
+      "mean": 0.26451851145232774,
+      "std": 0.3381823052737232
+    },
+    "CopulaGAN": {
+      "mean": 0.3297499512834667,
+      "std": 0.44855719391677423
+    },
+    "TVAE": {
+      "mean": 0.25397911207313917,
+      "std": 0.43521319013657067
+    },
+    "GaussianCopula": {
+      "mean": 0.14896667462829108,
+      "std": 0.16966764829337327
+    },
+    "WGAN_GP": {
+      "mean": 7.592078016340342,
+      "std": 69.73712227438877
+    },
+    "CTABGAN": {
+      "mean": 0.18347101488921239,
+      "std": 0.3019667027236825
+    }
+  },
+  "friedman_cd": {
+    "chi2": 5.94285714285715,
+    "p": 0.31181894460561604,
+    "avg_ranks": {
+      "CTGAN": 4.2,
+      "CopulaGAN": 4.4,
+      "TVAE": 3.2,
+      "GaussianCopula": 3.1,
+      "WGAN_GP": 2.8,
+      "CTABGAN": 3.3
+    },
+    "generators": [
+      "CTGAN",
+      "CopulaGAN",
+      "TVAE",
+      "GaussianCopula",
+      "WGAN_GP",
+      "CTABGAN"
+    ],
+    "not_significant_pairs": [],
+    "n_datasets": 10
   },
   "n_datasets": 10
 }

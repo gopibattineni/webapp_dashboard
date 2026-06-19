@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/webapp_dashboard/assets/styles.css?v=5" />
-  <link rel="stylesheet" href="/webapp_dashboard/assets/dashboard.css?v=6" />
+  <link rel="stylesheet" href="/webapp_dashboard/assets/dashboard.css?v=7" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@2.0.1/dist/chartjs-chart-matrix.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
@@ -42,13 +42,57 @@
       <div class="section-header">
         <div>
           <h2>Benchmark overview (all datasets)</h2>
-          <p class="hint">Recommended for paper: heatmaps show utility loss across the full benchmark; win-rate counts how often each generator ranks best.</p>
+          <p class="hint">Publication figure order: CD diagram → TSTR bars → TRTR–TSTR gap → heatmap. Utility-loss heatmaps and win-rate are supplementary.</p>
         </div>
       </div>
       <div class="figure-grid figure-grid-overview">
+        <div class="figure-card figure-card-wide">
+          <div class="figure-heading">
+            <h3 class="figure-title">Fig. 1 — Critical difference diagram</h3>
+            <p class="figure-caption">Average rank across datasets (Friedman + Nemenyi). Lower rank = better. Connected bars = not significantly different.</p>
+          </div>
+          <div class="figure-actions">
+            <button type="button" class="btn-export" data-export="chart-cd" data-filename="fig01_friedman_cd.png">PNG</button>
+          </div>
+          <div class="chart-box chart-box-cd"><canvas id="chart-cd"></canvas></div>
+        </div>
+        <div class="figure-card figure-card-wide">
+          <div class="figure-heading">
+            <h3 class="figure-title">Fig. 2 — Mean TSTR performance</h3>
+            <p class="figure-caption">Average TSTR score per generator with SD error bars (all datasets × downstream models)</p>
+          </div>
+          <div class="figure-actions">
+            <button type="button" class="btn-export" data-export="chart-tstr-sd" data-filename="fig02_tstr_mean_sd.png">PNG</button>
+          </div>
+          <div class="chart-box chart-box-tall"><canvas id="chart-tstr-sd"></canvas></div>
+        </div>
+        <div class="figure-card figure-card-wide">
+          <div class="figure-heading">
+            <h3 class="figure-title">Fig. 3 — TRTR vs TSTR gap</h3>
+            <p class="figure-caption">Utility gap = TRTR − TSTR per generator (smaller gap = better synthetic data)</p>
+          </div>
+          <div class="figure-actions">
+            <button type="button" class="btn-export" data-export="chart-trtr-gap" data-filename="fig03_trtr_tstr_gap.png">PNG</button>
+          </div>
+          <div class="chart-box chart-box-tall"><canvas id="chart-trtr-gap"></canvas></div>
+        </div>
+        <div class="figure-card figure-card-heatmap figure-card-wide">
+          <div class="figure-heading">
+            <h3 class="figure-title">Fig. 4 — TSTR heatmap (all datasets)</h3>
+            <p class="figure-caption">Mean TSTR score per dataset × generator (green = higher utility)</p>
+          </div>
+          <div class="figure-actions">
+            <button type="button" class="btn-export" data-export="heatmap-tstr" data-filename="fig04_heatmap_tstr.png">PNG</button>
+          </div>
+          <div class="chart-box chart-box-heatmap"><canvas id="heatmap-tstr"></canvas></div>
+          <div class="heatmap-scale-legend" id="heatmap-legend-tstr"></div>
+        </div>
+        <details class="supplementary-figures">
+          <summary>Supplementary figures (utility loss &amp; win-rate)</summary>
+          <div class="figure-grid figure-grid-overview">
         <div class="figure-card figure-card-heatmap">
           <div class="figure-heading">
-            <h3 class="figure-title">Fig. A — Classification utility loss</h3>
+            <h3 class="figure-title">Supp. A — Classification utility loss</h3>
             <p class="figure-caption">Avg. accuracy drop per dataset × generator (lower = better synthetic data)</p>
           </div>
           <div class="figure-actions">
@@ -59,7 +103,7 @@
         </div>
         <div class="figure-card figure-card-heatmap">
           <div class="figure-heading">
-            <h3 class="figure-title">Fig. B — Regression utility loss</h3>
+            <h3 class="figure-title">Supp. B — Regression utility loss</h3>
             <p class="figure-caption">Avg. R² drop per dataset × generator (lower = better)</p>
           </div>
           <div class="figure-actions">
@@ -70,7 +114,7 @@
         </div>
         <div class="figure-card figure-card-wide">
           <div class="figure-heading">
-            <h3 class="figure-title">Fig. C — Generator win-rate</h3>
+            <h3 class="figure-title">Supp. C — Generator win-rate</h3>
             <p class="figure-caption">Number of datasets where each generator has the lowest utility loss</p>
           </div>
           <div class="figure-actions">
@@ -78,6 +122,8 @@
           </div>
           <div class="chart-box chart-box-tall"><canvas id="chart-win-rate"></canvas></div>
         </div>
+          </div>
+        </details>
       </div>
     </section>
 
@@ -122,25 +168,34 @@
 
           <div class="card paper-section">
             <h2>Per-dataset paper figures</h2>
-            <p class="hint">TRTR vs TSTR bars compare real vs synthetic training (averaged over 10 downstream models). Model-drop chart shows which learners are most affected.</p>
-            <div class="form-row">
-              <label for="paper-gen-select">Generator (model-drop chart)</label>
-              <select id="paper-gen-select"></select>
-            </div>
-            <div class="figure-grid figure-grid-2">
-              <div class="figure-card">
-                <div class="figure-actions">
-                  <button type="button" class="btn-export" data-export="chart-trtr-tstr" data-filename="fig_trtr_tstr.png">PNG</button>
-                </div>
-                <div class="chart-box"><canvas id="chart-trtr-tstr"></canvas></div>
+            <p class="hint">Two separate publication figures per dataset: TRTR vs TSTR comparison, then utility drop by downstream model.</p>
+
+            <div class="figure-card figure-card-wide per-dataset-figure">
+              <div class="figure-heading">
+                <h3 class="figure-title" id="fig-trtr-tstr-title">TRTR vs TSTR</h3>
+                <p class="figure-caption">Mean accuracy averaged over 10 downstream models (blue = train on real, red = train on synthetic)</p>
               </div>
-              <div class="figure-card">
-                <div class="figure-actions">
-                  <button type="button" class="btn-export" data-export="chart-model-drop" data-filename="fig_model_drop.png">PNG</button>
-                </div>
-                <div class="chart-box"><canvas id="chart-model-drop"></canvas></div>
+              <div class="figure-actions">
+                <button type="button" class="btn-export" data-export="chart-trtr-tstr" data-filename="fig_trtr_tstr.png">PNG</button>
               </div>
+              <div class="chart-box chart-box-tall"><canvas id="chart-trtr-tstr"></canvas></div>
             </div>
+
+            <div class="figure-card figure-card-wide per-dataset-figure">
+              <div class="figure-heading">
+                <h3 class="figure-title" id="fig-model-drop-title">Utility drop by model</h3>
+                <p class="figure-caption">Accuracy drop (TRTR − TSTR) per classifier for the selected generator</p>
+              </div>
+              <div class="form-row form-row-inline">
+                <label for="paper-gen-select">Generator</label>
+                <select id="paper-gen-select"></select>
+              </div>
+              <div class="figure-actions">
+                <button type="button" class="btn-export" data-export="chart-model-drop" data-filename="fig_model_drop.png">PNG</button>
+              </div>
+              <div class="chart-box chart-box-tall"><canvas id="chart-model-drop"></canvas></div>
+            </div>
+
             <div class="figure-card figure-card-wide">
               <div class="figure-actions">
                 <button type="button" class="btn-export" data-export="chart-radar" data-filename="fig_radar_metrics.png">PNG</button>
@@ -202,7 +257,7 @@
   </footer>
 
   <script src="/webapp_dashboard/assets/utils.js?v=1"></script>
-  <script src="/webapp_dashboard/assets/dashboard-charts.js?v=7"></script>
-  <script src="/webapp_dashboard/assets/dashboard.js?v=3"></script>
+  <script src="/webapp_dashboard/assets/dashboard-charts.js?v=11"></script>
+  <script src="/webapp_dashboard/assets/dashboard.js?v=4"></script>
 </body>
 </html>

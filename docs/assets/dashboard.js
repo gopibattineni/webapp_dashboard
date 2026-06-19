@@ -260,7 +260,27 @@ function renderDashboard(data) {
   if (genNames.length) renderGeneratorTab(data, genNames[0]);
 
   renderDatasetList();
+  updatePerDatasetFigureTitles(data);
   refreshCharts();
+}
+
+function updatePerDatasetFigureTitles(data, gen) {
+  if (!data) return;
+  const dsName = data.short_name || data.name;
+  const metric = data.task_type === "regression" ? "R²" : "accuracy";
+  const trtrTitle = $("#fig-trtr-tstr-title");
+  const dropTitle = $("#fig-model-drop-title");
+  if (trtrTitle) trtrTitle.textContent = `TRTR vs TSTR — ${dsName}`;
+  if (dropTitle) {
+    const g = gen || $("#paper-gen-select")?.value;
+    dropTitle.textContent = g
+      ? `Utility drop by model — ${g} (${dsName})`
+      : `Utility drop by model — ${dsName}`;
+  }
+  const trtrCap = trtrTitle?.nextElementSibling;
+  if (trtrCap?.classList.contains("figure-caption")) {
+    trtrCap.textContent = `Mean ${metric} averaged over 10 downstream models (blue = train on real, red = train on synthetic)`;
+  }
 }
 
 async function loadDataset(id) {
@@ -313,7 +333,10 @@ async function init() {
   $("#gen-filter").addEventListener("change", () => {
     if (currentData) renderAllComparisons(currentData);
   });
-  $("#paper-gen-select").addEventListener("change", refreshCharts);
+  $("#paper-gen-select").addEventListener("change", () => {
+    if (currentData) updatePerDatasetFigureTitles(currentData, $("#paper-gen-select").value);
+    refreshCharts();
+  });
 
   try {
     [allDatasets, overviewData] = await Promise.all([

@@ -40,34 +40,41 @@ const heatmapValuePlugin = {
   id: "heatmapValues",
   afterDatasetsDraw(chart) {
     if (chart.config.type !== "matrix") return;
-    const { ctx, chartArea } = chart;
+    const { ctx } = chart;
     const dataset = chart.data.datasets[0];
     const meta = chart.getDatasetMeta(0);
-    const { min = 0, max = 1 } = chart.options.plugins?.heatmapScale || {};
+    const { min = 0, max = 1, higherIsBetter = false } = chart.options.plugins?.heatmapScale || {};
 
     meta.data.forEach((elem, i) => {
       const raw = dataset.data[i];
       if (raw?.v == null || Number.isNaN(raw.v)) return;
+
       const w = elem.width || 0;
       const h = elem.height || 0;
-      if (w < 24 || h < 16) return;
+      if (w < 14 || h < 12) return;
+
+      const center =
+        typeof elem.getCenterPoint === "function"
+          ? elem.getCenterPoint()
+          : { x: elem.x + w / 2, y: elem.y + h / 2 };
 
       const v = Number(raw.v);
       const text = v >= 10 ? v.toFixed(0) : v >= 1 ? v.toFixed(1) : v.toFixed(2);
-      const mid = min + (max - min) * 0.55;
-      const nearBottom = elem.y > chartArea.bottom - h * 0.6;
+      let t = max > min ? (v - min) / (max - min) : 0;
+      if (higherIsBetter) t = 1 - t;
+      const fill = t > 0.52 ? "#ffffff" : "#0f172a";
+      const stroke = t > 0.52 ? "rgba(15,23,42,0.5)" : "rgba(255,255,255,0.7)";
+      const fontSize = Math.max(10, Math.min(14, Math.floor(Math.min(w, h) * 0.36)));
 
       ctx.save();
-      ctx.fillStyle = isPaperTheme()
-        ? (v >= mid ? "#ffffff" : "#0f172a")
-        : v >= mid
-          ? "#ffffff"
-          : "#0f172a";
-      ctx.font = `700 ${w < 36 ? 11 : 13}px Inter, system-ui, sans-serif`;
+      ctx.font = `700 ${fontSize}px Inter, system-ui, sans-serif`;
       ctx.textAlign = "center";
-      ctx.textBaseline = nearBottom ? "bottom" : "middle";
-      const yPos = nearBottom ? elem.y + h / 2 - 3 : elem.y;
-      ctx.fillText(text, elem.x, yPos);
+      ctx.textBaseline = "middle";
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = stroke;
+      ctx.fillStyle = fill;
+      ctx.strokeText(text, center.x, center.y);
+      ctx.fillText(text, center.x, center.y);
       ctx.restore();
     });
   },
@@ -77,23 +84,59 @@ if (typeof Chart !== "undefined") {
   Chart.register(heatmapValuePlugin);
 }
 
+const errorBarPlugin = {
+  id: "errorBars",
+  afterDatasetsDraw(chart) {
+    const cfg = chart.config.options?.plugins?.errorBars;
+    if (!cfg?.values || chart.config.type !== "bar") return;
+    const meta = chart.getDatasetMeta(0);
+    const { ctx } = chart;
+    const yScale = chart.scales.y;
+    ctx.save();
+    ctx.strokeStyle = cfg.color || "#334155";
+    ctx.lineWidth = 1.6;
+    meta.data.forEach((bar, i) => {
+      const err = cfg.values[i];
+      const mean = chart.data.datasets[0].data[i];
+      if (err == null || mean == null) return;
+      const yTop = yScale.getPixelForValue(mean + err);
+      const yBot = yScale.getPixelForValue(mean - err);
+      const x = bar.x;
+      const cap = 7;
+      ctx.beginPath();
+      ctx.moveTo(x, yTop);
+      ctx.lineTo(x, yBot);
+      ctx.moveTo(x - cap, yTop);
+      ctx.lineTo(x + cap, yTop);
+      ctx.moveTo(x - cap, yBot);
+      ctx.lineTo(x + cap, yBot);
+      ctx.stroke();
+    });
+    ctx.restore();
+  },
+};
+
+if (typeof Chart !== "undefined") {
+  Chart.register(errorBarPlugin);
+}
+
 function heatmapLegendId(canvasId) {
   return canvasId.replace("heatmap-", "heatmap-legend-");
 }
 
-function updateHeatmapLegend(canvasId, min, max, label) {
+function updateHeatmapLegend(canvasId, min, max, label, higherIsBetter = false) {
   const el = document.getElementById(heatmapLegendId(canvasId));
   if (!el) return;
-  const lo = heatColor(min, min, max);
-  const hi = heatColor(max, min, max);
+  const lo = heatColor(min, min, max, higherIsBetter);
+  const hi = heatColor(max, min, max, higherIsBetter);
   el.innerHTML = `
     <div class="scale-bar" style="background: linear-gradient(to right, ${lo}, ${hi})"></div>
     <div class="scale-labels">
-      <span>Low · ${min.toFixed(2)}</span>
+      <span>${higherIsBetter ? "Low" : "Low"} · ${min.toFixed(2)}</span>
       <span class="scale-mid">${label}</span>
       <span>High · ${max.toFixed(2)}</span>
     </div>
-    <p class="scale-hint">Green = lower utility loss (better synthetic data)</p>
+    <p class="scale-hint">${higherIsBetter ? "Green = higher TSTR (better)" : "Green = lower utility loss (better synthetic data)"}</p>
   `;
 }
 
@@ -193,21 +236,23 @@ function exportChart(id, filename) {
   a.click();
 }
 
-function heatColor(value, min, max) {
+function heatColor(value, min, max, invert = false) {
   if (value == null || Number.isNaN(value)) return "rgba(148,163,184,0.3)";
-  const t = max > min ? (value - min) / (max - min) : 0;
+  let t = max > min ? (value - min) / (max - min) : 0;
+  if (invert) t = 1 - t;
   const r = Math.round(34 + t * (220 - 34));
   const g = Math.round(197 - t * (197 - 38));
   const b = Math.round(94 - t * (94 - 38));
   return `rgba(${r},${g},${b},0.92)`;
 }
 
-function renderHeatmap(canvasId, rows, generators, metricLabel) {
+function renderHeatmap(canvasId, rows, generators, metricLabel, opts = {}) {
   const canvas = document.getElementById(canvasId);
   if (!canvas || !rows.length) return;
 
   destroyChart(canvasId);
 
+  const higherIsBetter = opts.higherIsBetter ?? /tstr/i.test(metricLabel);
   const values = [];
   rows.forEach((row) => {
     generators.forEach((gen) => {
@@ -215,8 +260,8 @@ function renderHeatmap(canvasId, rows, generators, metricLabel) {
       if (v != null) values.push(v);
     });
   });
-  const min = Math.min(...values, 0);
-  const max = Math.max(...values, 0.01);
+  const min = higherIsBetter ? Math.min(...values) : Math.min(...values, 0);
+  const max = higherIsBetter ? Math.max(...values) : Math.max(...values, 0.01);
 
   const xLabels = generators.map((g) => GEN_SHORT[g] || g);
   const yLabels = rows.map((r) => r.short_name);
@@ -247,7 +292,7 @@ function renderHeatmap(canvasId, rows, generators, metricLabel) {
             data,
             backgroundColor: (ctx) => {
               const v = ctx.dataset.data[ctx.dataIndex]?.v;
-              return heatColor(v, min, max);
+              return heatColor(v, min, max, higherIsBetter);
             },
             borderColor: isPaperTheme() ? "#cbd5e1" : "#1a2332",
             borderWidth: 2,
@@ -267,7 +312,7 @@ function renderHeatmap(canvasId, rows, generators, metricLabel) {
         layout: { padding: { bottom: 12, top: 12, left: 8, right: 12 } },
         plugins: {
           ...baseOptions().plugins,
-          heatmapScale: { min, max, label: metricLabel },
+          heatmapScale: { min, max, label: metricLabel, higherIsBetter },
           legend: { display: false },
           tooltip: {
             callbacks: {
@@ -323,7 +368,7 @@ function renderHeatmap(canvasId, rows, generators, metricLabel) {
       },
     })
   );
-  updateHeatmapLegend(canvasId, min, max, metricLabel);
+  updateHeatmapLegend(canvasId, min, max, metricLabel, higherIsBetter);
   return chart;
 }
 
@@ -400,6 +445,77 @@ function renderWinRateChart(canvasId, winCounts) {
             title: {
               display: true,
               text: "Win count (# datasets)",
+              color: c.muted,
+              font: { size: 13, weight: "600" },
+            },
+          },
+          x: {
+            title: {
+              display: true,
+              text: "Generator",
+              color: c.muted,
+              font: { size: 13, weight: "600" },
+            },
+            ticks: { color: c.text, font: { size: 12 } },
+            grid: { display: false },
+          },
+        },
+      },
+    })
+  );
+}
+
+function renderTstrMeanSdChart(canvasId, tstrByGenerator) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || !tstrByGenerator) return;
+
+  destroyChart(canvasId);
+
+  const labels = GENERATOR_ORDER.filter((g) => tstrByGenerator[g]);
+  const means = labels.map((g) => tstrByGenerator[g].mean);
+  const stds = labels.map((g) => tstrByGenerator[g].std ?? 0);
+  const displayLabels = labels.map((g) => GEN_SHORT[g] || g);
+  const c = themeColors();
+  const floor = Math.min(...means.map((m, i) => m - stds[i]));
+
+  registerChart(
+    canvasId,
+    new Chart(canvas, {
+      type: "bar",
+      data: {
+        labels: displayLabels,
+        datasets: [
+          {
+            label: "Mean TSTR score",
+            data: means,
+            backgroundColor: labels.map((g) => GEN_COLORS[g] || "#64748b"),
+            borderRadius: 4,
+            borderWidth: 0,
+          },
+        ],
+      },
+      options: {
+        ...baseOptions(),
+        plugins: {
+          ...baseOptions().plugins,
+          legend: { display: false },
+          errorBars: { values: stds, color: c.text },
+          datalabels: {
+            ...barValueLabels(c, { decimals: 3 }),
+            anchor: "end",
+            align: "top",
+            offset: 4,
+          },
+        },
+        scales: {
+          y: {
+            beginAtZero: false,
+            suggestedMin: floor * 0.98,
+            ticks: { color: c.muted, font: { size: 12 } },
+            grid: { color: c.grid },
+            title: {
+              display: true,
+              text: "Mean TSTR score",
               color: c.muted,
               font: { size: 13, weight: "600" },
             },
@@ -748,6 +864,193 @@ function renderSummaryBar(canvasId, data, title) {
   );
 }
 
+function tstrHeatmapRows(rows) {
+  return (rows || []).map((r) => ({
+    ...r,
+    generators: r.tstr_generators || r.generators,
+  }));
+}
+
+function renderCdDiagram(canvasId, cd) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || !cd?.avg_ranks) return;
+
+  destroyChart(canvasId);
+
+  const c = themeColors();
+  const parent = canvas.parentElement;
+  const width = Math.max(320, parent?.clientWidth || 640);
+  const height = Math.max(220, parent?.clientHeight || 280);
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
+
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, width, height);
+
+  const gens = GENERATOR_ORDER.filter((g) => cd.avg_ranks[g] != null).sort(
+    (a, b) => cd.avg_ranks[a] - cd.avg_ranks[b]
+  );
+  const k = gens.length;
+  const margin = { top: 36, right: 28, bottom: 28, left: 28 };
+  const plotW = width - margin.left - margin.right;
+  const rowH = (height - margin.top - margin.bottom) / Math.max(k, 1);
+  const minRank = 1;
+  const maxRank = k;
+
+  const rankX = (rank) =>
+    margin.left + ((rank - minRank) / Math.max(maxRank - minRank, 1)) * plotW;
+
+  ctx.fillStyle = c.muted;
+  ctx.font = "600 12px Inter, system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("Best", margin.left, 18);
+  ctx.fillText("Worst", width - margin.right, 18);
+  if (cd.chi2 != null) {
+    ctx.font = "500 11px Inter, system-ui, sans-serif";
+    ctx.fillText(
+      `Friedman χ²=${Number(cd.chi2).toFixed(2)}, p=${Number(cd.p).toExponential(1)}`,
+      width / 2,
+      18
+    );
+  }
+
+  ctx.strokeStyle = c.grid;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(margin.left, margin.top);
+  ctx.lineTo(width - margin.right, margin.top);
+  ctx.stroke();
+
+  for (let t = minRank; t <= maxRank; t++) {
+    const x = rankX(t);
+    ctx.strokeStyle = c.grid;
+    ctx.beginPath();
+    ctx.moveTo(x, margin.top);
+    ctx.lineTo(x, height - margin.bottom);
+    ctx.stroke();
+    ctx.fillStyle = c.muted;
+    ctx.font = "10px Inter, system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(String(t), x, height - 8);
+  }
+
+  const barY = margin.top - 14;
+  const pairs = cd.not_significant_pairs || [];
+  pairs.forEach(([g1, g2]) => {
+    const r1 = cd.avg_ranks[g1];
+    const r2 = cd.avg_ranks[g2];
+    if (r1 == null || r2 == null) return;
+    const x1 = rankX(r1);
+    const x2 = rankX(r2);
+    ctx.strokeStyle = "#64748b";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x1, barY);
+    ctx.lineTo(x2, barY);
+    ctx.stroke();
+  });
+
+  gens.forEach((gen, i) => {
+    const rank = cd.avg_ranks[gen];
+    const y = margin.top + rowH * i + rowH / 2;
+    const x = rankX(rank);
+    const half = Math.min(28, plotW / (k * 2.2));
+
+    ctx.strokeStyle = GEN_COLORS[gen] || "#3b82f6";
+    ctx.lineWidth = 5;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(x - half, y);
+    ctx.lineTo(x + half, y);
+    ctx.stroke();
+
+    ctx.fillStyle = c.text;
+    ctx.font = "600 12px Inter, system-ui, sans-serif";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    ctx.fillText(GEN_SHORT[gen] || gen, margin.left - 8, y);
+    ctx.textAlign = "left";
+    ctx.fillText(`(${rank.toFixed(2)})`, x + half + 6, y);
+  });
+
+  chartRegistry[canvasId] = {
+    toBase64Image: (type = "image/png") => canvas.toDataURL(type),
+  };
+}
+
+function renderGapChart(canvasId, gapByGenerator) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || !gapByGenerator) return;
+
+  destroyChart(canvasId);
+
+  const labels = GENERATOR_ORDER.filter((g) => gapByGenerator[g]);
+  const means = labels.map((g) => gapByGenerator[g].mean);
+  const stds = labels.map((g) => gapByGenerator[g].std ?? 0);
+  const displayLabels = labels.map((g) => GEN_SHORT[g] || g);
+  const c = themeColors();
+
+  registerChart(
+    canvasId,
+    new Chart(canvas, {
+      type: "bar",
+      data: {
+        labels: displayLabels,
+        datasets: [
+          {
+            label: "TRTR − TSTR gap",
+            data: means,
+            backgroundColor: labels.map((g) => GEN_COLORS[g] || "#64748b"),
+            borderRadius: 4,
+            borderWidth: 0,
+          },
+        ],
+      },
+      options: {
+        ...baseOptions(),
+        plugins: {
+          ...baseOptions().plugins,
+          legend: { display: false },
+          errorBars: { values: stds, color: c.text },
+          datalabels: {
+            ...barValueLabels(c, { decimals: 3 }),
+            anchor: "end",
+            align: "top",
+            offset: 4,
+          },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { color: c.muted, font: { size: 12 } },
+            grid: { color: c.grid },
+            title: {
+              display: true,
+              text: "TRTR − TSTR (smaller = better synthetic data)",
+              color: c.muted,
+              font: { size: 13, weight: "600" },
+            },
+          },
+          x: {
+            title: {
+              display: true,
+              text: "Generator",
+              color: c.muted,
+              font: { size: 13, weight: "600" },
+            },
+            ticks: { color: c.text, font: { size: 12 } },
+            grid: { display: false },
+          },
+        },
+      },
+    })
+  );
+}
+
 function avg(arr) {
   if (!arr.length) return 0;
   return arr.reduce((a, b) => a + b, 0) / arr.length;
@@ -755,6 +1058,15 @@ function avg(arr) {
 
 function refreshOverviewCharts(overview) {
   if (!overview) return;
+  renderCdDiagram("chart-cd", overview.friedman_cd);
+  renderTstrMeanSdChart("chart-tstr-sd", overview.tstr_by_generator);
+  renderGapChart("chart-trtr-gap", overview.gap_by_generator);
+  renderHeatmap(
+    "heatmap-tstr",
+    tstrHeatmapRows(overview.tstr_all || [...overview.classification, ...overview.regression]),
+    overview.generators,
+    "Mean TSTR"
+  );
   renderHeatmap(
     "heatmap-clf",
     overview.classification,
