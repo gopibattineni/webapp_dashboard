@@ -6,12 +6,12 @@
   <title>TRTR/TSTR Results Dashboard — SYNTH</title>
   <link href="https://cdn.jsdelivr.net/gh/vsalvino/computer-modern@main/fonts/serif.css" rel="stylesheet" />
   <link rel="stylesheet" href="/static/styles.css?v=6" />
-  <link rel="stylesheet" href="/static/dashboard.css?v=8" />
+  <link rel="stylesheet" href="/static/dashboard.css?v=9" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@2.0.1/dist/chartjs-chart-matrix.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 </head>
-<body data-static="false">
+<body class="paper-theme" data-static="false">
   <header>
     <div class="container header-inner">
       <a class="header-logo header-logo-left" href="/" aria-label="LERO">
@@ -30,7 +30,7 @@
   <nav class="container top-nav">
     <a href="/" class="nav-link">Run Experiment</a>
     <a href="/dashboard" class="nav-link active">Results Dashboard</a>
-    <button type="button" id="btn-paper-theme" class="nav-link paper-toggle" title="White background for paper screenshots">Paper theme</button>
+    <button type="button" id="btn-paper-theme" class="nav-link paper-toggle active" title="White background for publication figures">Paper theme</button>
   </nav>
 
   <main class="container">
@@ -173,7 +173,7 @@
                 <p class="figure-caption">Mean accuracy averaged over 10 downstream models (blue = train on real, red = train on synthetic)</p>
               </div>
               <div class="figure-actions">
-                <button type="button" class="btn-export" data-export="chart-trtr-tstr" data-filename="fig_trtr_tstr.png">PNG</button>
+                <button type="button" class="btn-export btn-export-primary" data-export="chart-trtr-tstr" data-filename="trtr_tstr.png">Download PNG</button>
               </div>
               <div class="chart-box chart-box-tall"><canvas id="chart-trtr-tstr"></canvas></div>
             </div>
@@ -254,7 +254,7 @@
   </footer>
 
   <script src="/static/utils.js?v=1"></script>
-  <script src="/static/dashboard-charts.js?v=13"></script>
-  <script src="/static/dashboard.js?v=5"></script>
+  <script src="/static/dashboard-charts.js?v=19"></script>
+  <script src="/static/dashboard.js?v=7"></script>
 </body>
 </html>

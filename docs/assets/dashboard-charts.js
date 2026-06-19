@@ -151,6 +151,24 @@ if (typeof Chart !== "undefined") {
   Chart.register(errorBarPlugin);
 }
 
+const paperBgPlugin = {
+  id: "paperBg",
+  beforeDraw(chart) {
+    if (!isPaperTheme()) return;
+    const { ctx } = chart;
+    const w = chart.width;
+    const h = chart.height;
+    ctx.save();
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  },
+};
+
+if (typeof Chart !== "undefined") {
+  Chart.register(paperBgPlugin);
+}
+
 function heatmapLegendId(canvasId) {
   return canvasId.replace("heatmap-", "heatmap-legend-");
 }
@@ -258,8 +276,10 @@ function registerChart(id, chart) {
   return chart;
 }
 
-const EXPORT_PIXEL_RATIO = 3;
-const EXPORT_PAD = 52;
+const EXPORT_DPR = 2;
+const EXPORT_PAD = 40;
+const EXPORT_CD_WIDTH = 900;
+const EXPORT_CD_HEIGHT = 480;
 const OVERVIEW_CHART_IDS = new Set([
   "chart-cd",
   "chart-tstr-sd",
@@ -307,6 +327,63 @@ function getFigureMeta(canvasId) {
     title: card?.querySelector(".figure-title")?.textContent?.trim() || "",
     caption: card?.querySelector(".figure-caption")?.textContent?.trim() || "",
   };
+}
+
+function chartHasPluginTitle(chart) {
+  return !!chart?.options?.plugins?.title?.display;
+}
+
+function getExportHeader(canvasId, chart) {
+  const meta = getFigureMeta(canvasId);
+  const hasChartTitle = chartHasPluginTitle(chart);
+  return {
+    // Match on-screen layout: title/caption live in HTML or inside the chart — not both.
+    title: hasChartTitle ? "" : meta.title,
+    caption: hasChartTitle ? "" : meta.caption,
+  };
+}
+
+async function ensureFontsReady() {
+  if (!document.fonts?.load) return;
+  try {
+    await Promise.all([
+      document.fonts.load('normal 12px "Computer Modern Serif"'),
+      document.fonts.load('bold 12px "Computer Modern Serif"'),
+      document.fonts.load('bold 22px "Computer Modern Serif"'),
+    ]);
+    await document.fonts.ready;
+  } catch {
+    /* use fallback serif if CDN font unavailable */
+  }
+}
+
+function loadImage(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("Failed to load chart image"));
+    img.src = dataUrl;
+  });
+}
+
+function imageToCanvas(img) {
+  const w = img.naturalWidth || img.width;
+  const h = img.naturalHeight || img.height;
+  const off = document.createElement("canvas");
+  off.width = w;
+  off.height = h;
+  const ctx = off.getContext("2d");
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(img, 0, 0, w, h);
+  return { canvas: off, pixelW: w, pixelH: h };
+}
+
+function getChartInstance(canvasId) {
+  const entry = chartRegistry[canvasId];
+  if (entry?.canvas) return entry;
+  const canvas = document.getElementById(canvasId);
+  return canvas ? Chart.getChart(canvas) : null;
 }
 
 function wrapText(ctx, text, maxWidth) {
@@ -478,17 +555,17 @@ function paintCdDiagram(ctx, width, height, cd, c) {
 
 function captureCdCanvas(cd, width, height) {
   const off = document.createElement("canvas");
-  off.width = Math.round(width * EXPORT_PIXEL_RATIO);
-  off.height = Math.round(height * EXPORT_PIXEL_RATIO);
+  off.width = Math.round(width * EXPORT_DPR);
+  off.height = Math.round(height * EXPORT_DPR);
   const ctx = off.getContext("2d");
-  ctx.scale(EXPORT_PIXEL_RATIO, EXPORT_PIXEL_RATIO);
+  ctx.scale(EXPORT_DPR, EXPORT_DPR);
   paintCdDiagram(ctx, width, height, cd, {
     text: "#1e293b",
     muted: "#64748b",
     grid: "#e2e8f0",
     bg: "#ffffff",
   });
-  return { canvas: off, logicalW: width, logicalH: height };
+  return { dataUrl: off.toDataURL("image/png"), chart: null };
 }
 
 function getHeatmapScaleMeta(canvasId) {
@@ -503,96 +580,104 @@ async function captureChartCanvas(canvasId) {
 
   const entry = chartRegistry[canvasId];
   if (entry?.cdData) {
-    const parent = canvas.parentElement;
-    const w = Math.max(960, parent?.clientWidth || 960);
-    const h = Math.max(380, parent?.clientHeight || 380);
-    return captureCdCanvas(entry.cdData, w, h);
+    await ensureFontsReady();
+    return captureCdCanvas(entry.cdData, EXPORT_CD_WIDTH, EXPORT_CD_HEIGHT);
   }
 
-  const chart = entry?.canvas ? entry : Chart.getChart(canvas);
+  const chart = getChartInstance(canvasId);
   if (!chart) return null;
 
   const oldDpr = chart.options.devicePixelRatio;
-  const oldW = chart.width;
-  const oldH = chart.height;
-  chart.options.devicePixelRatio = EXPORT_PIXEL_RATIO;
-  chart.resize(oldW, oldH);
-  await waitFrames(2);
+  const oldAnim = chart.options.animation;
 
-  const off = document.createElement("canvas");
-  off.width = chart.canvas.width;
-  off.height = chart.canvas.height;
-  const ctx = off.getContext("2d");
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, off.width, off.height);
-  ctx.drawImage(chart.canvas, 0, 0);
+  chart.options.animation = false;
+  chart.options.devicePixelRatio = EXPORT_DPR;
+  chart.resize();
+  chart.update("none");
+  await ensureFontsReady();
+  await waitFrames(4);
+
+  const rawUrl = chart.toBase64Image("image/png", 1);
+  const img = await loadImage(rawUrl);
+  const { canvas: off } = imageToCanvas(img);
+  const dataUrl = off.toDataURL("image/png");
 
   chart.options.devicePixelRatio = oldDpr ?? window.devicePixelRatio ?? 1;
-  chart.resize(oldW, oldH);
+  chart.options.animation = oldAnim;
+  chart.resize();
+  chart.update("none");
 
-  return { canvas: off, logicalW: oldW, logicalH: oldH };
+  return { dataUrl, chart };
 }
 
 async function buildPublicationPng(canvasId) {
   const captured = await captureChartCanvas(canvasId);
   if (!captured) return null;
 
-  const { canvas: chartCanvas, logicalW, logicalH } = captured;
-  const { title, caption } = getFigureMeta(canvasId);
+  const { dataUrl, chart } = captured;
+  const { title, caption } = getExportHeader(canvasId, chart);
   const heatmapScale = canvasId.startsWith("heatmap-") ? getHeatmapScaleMeta(canvasId) : null;
 
-  const contentW = Math.max(logicalW, 720);
-  const pad = EXPORT_PAD;
-  const titleFont = cmCanvasFont(22, "bold");
-  const captionFont = cmCanvasFont(15, "normal");
+  if (!title && !caption && !heatmapScale) {
+    return dataUrl;
+  }
+
+  await ensureFontsReady();
+
+  const img = await loadImage(dataUrl);
+  const { canvas: chartCanvas, pixelW, pixelH } = imageToCanvas(img);
+  const scale = pixelW / 900;
+  const pad = Math.round(EXPORT_PAD * Math.max(scale, 1));
+  const titleFont = cmCanvasFont(Math.round(18 * Math.max(scale, 1)), "bold");
+  const captionFont = cmCanvasFont(Math.round(13 * Math.max(scale, 1)), "normal");
   const measure = document.createElement("canvas").getContext("2d");
 
   measure.font = titleFont;
-  const titleLines = wrapText(measure, title, contentW);
+  const titleLines = wrapText(measure, title, pixelW);
   measure.font = captionFont;
-  const captionLines = wrapText(measure, caption, contentW);
+  const captionLines = wrapText(measure, caption, pixelW);
 
-  const titleH = titleLines.length ? titleLines.length * 30 : 0;
-  const captionH = captionLines.length ? captionLines.length * 22 : 0;
-  const headerGap = title || caption ? 16 : 0;
-  const legendBlock = heatmapScale ? 72 : 0;
-  const totalW = contentW + pad * 2;
-  const totalH = pad + titleH + (caption ? captionH + 8 : 0) + headerGap + logicalH + legendBlock + pad;
+  const titleBlock = titleLines.length ? titleLines.length * Math.round(26 * scale) + 8 : 0;
+  const captionBlock = captionLines.length ? captionLines.length * Math.round(20 * scale) + 12 : 0;
+  const legendBlock = heatmapScale ? Math.round(72 * scale) : 0;
+  const totalW = pixelW + pad * 2;
+  const totalH = pad + titleBlock + captionBlock + pixelH + legendBlock + pad;
 
   const out = document.createElement("canvas");
-  out.width = Math.round(totalW * EXPORT_PIXEL_RATIO);
-  out.height = Math.round(totalH * EXPORT_PIXEL_RATIO);
+  out.width = totalW;
+  out.height = totalH;
   const ctx = out.getContext("2d");
-  ctx.scale(EXPORT_PIXEL_RATIO, EXPORT_PIXEL_RATIO);
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, totalW, totalH);
 
   let y = pad;
   if (titleLines.length) {
-    drawTextLines(ctx, titleLines, pad, y, 30, "#0f172a", titleFont);
-    y += titleH + 6;
+    drawTextLines(ctx, titleLines, pad, y, Math.round(26 * scale), "#0f172a", titleFont);
+    y += titleBlock;
   }
   if (captionLines.length) {
-    drawTextLines(ctx, captionLines, pad, y, 22, "#64748b", captionFont);
-    y += captionH + headerGap;
-  } else if (titleLines.length) {
-    y += headerGap;
+    drawTextLines(ctx, captionLines, pad, y, Math.round(20 * scale), "#64748b", captionFont);
+    y += captionBlock;
   }
 
-  const chartX = pad + (contentW - logicalW) / 2;
-  ctx.drawImage(chartCanvas, chartX, y, logicalW, logicalH);
-  y += logicalH + 12;
+  ctx.drawImage(chartCanvas, pad, y, pixelW, pixelH);
+  y += pixelH + Math.round(12 * scale);
 
   if (heatmapScale) {
-    drawHeatmapLegendBar(ctx, pad, y, contentW, 16, heatmapScale);
+    drawHeatmapLegendBar(ctx, pad, y, pixelW, Math.round(16 * scale), heatmapScale);
   }
 
   return out.toDataURL("image/png");
 }
 
+function setPaperTheme(on) {
+  document.body.classList.toggle("paper-theme", on);
+  const btn = document.querySelector("#btn-paper-theme");
+  if (btn) btn.classList.toggle("active", on);
+}
+
 async function exportChart(canvasId, filename) {
   const btn = document.querySelector(`[data-export="${canvasId}"]`);
-  const wasPaper = isPaperTheme();
   const prevLabel = btn?.textContent;
 
   if (btn) {
@@ -601,18 +686,27 @@ async function exportChart(canvasId, filename) {
   }
 
   try {
-    document.body.classList.add("paper-theme");
+    setPaperTheme(true);
     if (exportContext?.overview && OVERVIEW_CHART_IDS.has(canvasId)) {
       refreshOverviewCharts(exportContext.overview);
     } else if (exportContext?.datasetData && DATASET_CHART_IDS.has(canvasId)) {
       refreshDatasetCharts(exportContext.datasetData, exportContext.selectedGen);
     }
-    await waitFrames(3);
+    await ensureFontsReady();
+    await waitFrames(6);
+    await new Promise((r) => setTimeout(r, 250));
 
     const dataUrl = await buildPublicationPng(canvasId);
-    if (dataUrl) downloadDataUrl(dataUrl, filename);
+    if (dataUrl) {
+      downloadDataUrl(dataUrl, filename);
+    } else {
+      throw new Error("Chart not ready — select a dataset and wait for figures to load.");
+    }
+  } catch (err) {
+    console.error(err);
+    alert(err.message || "PNG export failed. Please try again.");
   } finally {
-    if (!wasPaper) document.body.classList.remove("paper-theme");
+    setPaperTheme(true);
     if (exportContext) {
       if (OVERVIEW_CHART_IDS.has(canvasId)) {
         refreshOverviewCharts(exportContext.overview);
@@ -622,7 +716,7 @@ async function exportChart(canvasId, filename) {
     }
     if (btn) {
       btn.disabled = false;
-      btn.textContent = prevLabel || "PNG";
+      btn.textContent = prevLabel || "Download PNG";
     }
   }
 }
@@ -991,11 +1085,13 @@ function renderTrtrTstrGrouped(canvasId, data, title) {
         },
         scales: {
           y: {
-            beginAtZero: !isReg,
+            beginAtZero: true,
+            min: isReg ? undefined : 0,
+            max: isReg ? undefined : 1,
             suggestedMin: isReg
               ? Math.min(...tstrMeans, ...trtrMeans) - 0.05
-              : 0,
-            max: isReg ? undefined : 1,
+              : undefined,
+            grace: isReg ? "5%" : 0,
             ticks: { color: c.muted, font: chartFont(12) },
             grid: { color: c.grid },
             title: {
@@ -1428,6 +1524,7 @@ window.DashboardCharts = {
   destroyChart,
   exportChart,
   setExportContext,
+  setPaperTheme,
   refreshOverviewCharts,
   refreshDatasetCharts,
   refreshAllCharts,
